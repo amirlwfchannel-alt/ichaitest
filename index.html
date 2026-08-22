@@ -119,6 +119,19 @@
                   class="absolute -top-2 -left-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"></span>
           </button>
 
+          <!-- Cart button -->
+          <button @click="$store.cart.showPanel = true"
+                  class="relative cursor-pointer"
+                  style="color:var(--cafe-text-muted)"
+                  title="سبد خرید">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
+            </svg>
+            <span x-show="$store.cart.count > 0"
+                  x-text="$store.cart.count"
+                  class="absolute -top-2 -left-2 bg-green-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"></span>
+          </button>
+
           <!-- Dark/Light mode toggle -->
           <button @click="toggleTheme()" class="cursor-pointer" style="color:var(--cafe-text-muted)" :title="darkMode ? 'حالت روشن' : 'حالت تاریک'">
             <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
@@ -207,14 +220,25 @@
                 <div class="card-price">
                   <span x-text="formatPrice(product.price)"></span>
                 </div>
-                <button class="fav-btn"
-                        :class="{ 'active': isFavorite(product.id) }"
-                        @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
-                        title="افزودن به علاقه‌مندی‌ها">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                </button>
+                <div class="flex gap-2">
+                  <!-- Cart add button -->
+                  <button class="cart-add-btn"
+                          :class="{ 'active': $store.cart.inCart(product.id) }"
+                          @click="$store.cart.add(product)"
+                          title="افزودن به سفارش">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                  </button>
+                  <button class="fav-btn"
+                          :class="{ 'active': isFavorite(product.id) }"
+                          @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
+                          title="افزودن به علاقه‌مندی‌ها">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -278,14 +302,25 @@
                 <div class="card-price">
                   <span x-text="formatPrice(product.price)"></span>
                 </div>
-                <button class="fav-btn"
-                        :class="{ 'active': isFavorite(product.id) }"
-                        @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
-                        title="علاقه‌مندی">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
-                  </svg>
-                </button>
+                <div class="flex gap-2">
+                  <!-- Cart add button -->
+                  <button class="cart-add-btn"
+                          :class="{ 'active': $store.cart.inCart(product.id) }"
+                          @click="$store.cart.add(product)"
+                          title="افزودن به سفارش">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
+                    </svg>
+                  </button>
+                  <button class="fav-btn"
+                          :class="{ 'active': isFavorite(product.id) }"
+                          @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
+                          title="علاقه‌مندی">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                    </svg>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -458,7 +493,150 @@
     </div>
   </footer>
 
-  <!-- ═══════════════ FAVORITES PANEL ═══════════════ -->
+  <!-- ═══════════════ CART PANEL ═══════════════ -->
+  <div x-show="$store.cart.showPanel" x-transition.opacity class="fav-panel-overlay" @click="$store.cart.showPanel=false"></div>
+  <div x-show="$store.cart.showPanel"
+       x-transition:enter="transition ease-out duration-300"
+       x-transition:enter-start="-translate-x-full"
+       x-transition:enter-end="translate-x-0"
+       x-transition:leave="transition ease-in duration-200"
+       x-transition:leave-start="translate-x-0"
+       x-transition:leave-end="-translate-x-full"
+       class="fav-panel">
+    <div class="fav-panel-header">
+      <h3 x-text="$store.cart.activeTab === 'cart' ? 'سبد خرید' : 'پیگیری سفارش'"></h3>
+      <button class="fav-panel-close" @click="$store.cart.showPanel=false">✕</button>
+    </div>
+
+    <!-- Tabs -->
+    <div class="cart-tabs">
+      <button class="cart-tab" :class="{'active': $store.cart.activeTab==='cart'}" @click="$store.cart.activeTab='cart'; $store.cart.refreshTracking()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+        سبد خرید
+      </button>
+      <button class="cart-tab" :class="{'active': $store.cart.activeTab==='track'}" @click="$store.cart.activeTab='track'; $store.cart.refreshTracking()">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        پیگیری سفارش
+      </button>
+    </div>
+
+    <div class="fav-panel-body">
+
+      <!-- ══ CART TAB ══ -->
+      <div x-show="$store.cart.activeTab === 'cart'">
+        <!-- Empty cart -->
+        <div x-show="$store.cart.items.length === 0" class="fav-panel-empty">
+          <svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
+          </svg>
+          <h4>سبد خرید خالی است</h4>
+          <p>با کلیک روی <span class="cart-add-icon">＋</span> محصولات را اضافه کنید</p>
+        </div>
+
+        <!-- Cart items -->
+        <template x-for="item in $store.cart.items" :key="item.id">
+          <div class="fav-panel-item">
+            <img :src="item.image_url" :alt="item.name_fa" class="fav-panel-item-img" loading="lazy">
+            <div class="fav-panel-item-info">
+              <div class="fav-panel-item-name" x-text="item.name_fa"></div>
+              <div class="fav-panel-item-price" x-text="$store.cart.formatPrice(item.price)"></div>
+              <!-- Quantity controls -->
+              <div class="flex items-center gap-2 mt-1">
+                <button class="qty-btn" @click="$store.cart.updateQty(item.id, -1)">−</button>
+                <span class="text-sm font-bold" x-text="$store.cart.qty(item.id)" style="color:var(--cafe-text);min-width:20px;text-align:center"></span>
+                <button class="qty-btn" @click="$store.cart.updateQty(item.id, 1)">+</button>
+              </div>
+            </div>
+            <button class="fav-panel-item-remove" @click="$store.cart.remove(item.id)" title="حذف">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+        </template>
+
+        <!-- Order form (when cart has items) -->
+        <div x-show="$store.cart.items.length > 0" class="cart-order-form">
+          <div class="cart-total-row">
+            <span class="text-sm font-bold" style="color:var(--cafe-text-muted)">جمع سفارش:</span>
+            <span class="text-lg font-black" style="color:var(--cafe-gold)" x-text="$store.cart.formatPrice($store.cart.total)"></span>
+          </div>
+          <div class="mb-2">
+            <input type="text" class="feedback-input" placeholder="شماره میز (اختیاری)" x-model="$store.cart.tableNumber" maxlength="10">
+          </div>
+          <div class="mb-3">
+            <input type="text" class="feedback-input" placeholder="توضیحات (اختیاری)" x-model="$store.cart.notes" maxlength="300">
+          </div>
+          <p x-show="$store.cart.orderError" class="text-xs mb-2" style="color:var(--admin-red)" x-text="$store.cart.orderError"></p>
+          <button class="feedback-submit" @click="$store.cart.submit()" :disabled="$store.cart.isSubmitting">
+            <span x-show="!$store.cart.isSubmitting">ثبت سفارش</span>
+            <span x-show="$store.cart.isSubmitting">در حال ثبت...</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- ══ TRACKING TAB ══ -->
+      <div x-show="$store.cart.activeTab === 'track'">
+        <div x-show="$store.cart.myOrders.length === 0" class="fav-panel-empty">
+          <svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+          <h4>سفارشی ثبت نشده</h4>
+          <p>پس از ثبت سفارش، وضعیت آن را اینجا ببینید</p>
+        </div>
+        <template x-for="order in $store.cart.myOrders" :key="order.order_number">
+          <div class="track-order-card">
+            <div class="track-order-header">
+              <span class="font-bold text-sm" style="color:var(--cafe-text)" x-text="order.order_number"></span>
+              <span class="track-status-badge" :style="'background:' + $store.cart.getStatusColor(order.status)" x-text="$store.cart.getStatusLabel(order.status)"></span>
+            </div>
+            <div class="text-xs mt-1" style="color:var(--cafe-text-muted)">
+              <span x-text="$store.cart.formatPrice(order.total_price)"></span> · <span x-text="order.item_count + ' آیتم'"></span>
+            </div>
+            <div x-show="order.table_number" class="text-xs mt-1" style="color:var(--cafe-text-muted)">
+              میز: <span x-text="order.table_number"></span>
+            </div>
+            <!-- Status steps -->
+            <div class="track-steps">
+              <div class="track-step" :class="{'active': ['new','preparing','ready','delivered'].includes(order.status)}">
+                <div class="track-dot"></div>
+                <span>جدید</span>
+              </div>
+              <div class="track-line" :class="{'active': ['preparing','ready','delivered'].includes(order.status)}"></div>
+              <div class="track-step" :class="{'active': ['preparing','ready','delivered'].includes(order.status)}">
+                <div class="track-dot"></div>
+                <span>آماده‌سازی</span>
+              </div>
+              <div class="track-line" :class="{'active': ['ready','delivered'].includes(order.status)}"></div>
+              <div class="track-step" :class="{'active': ['ready','delivered'].includes(order.status)}">
+                <div class="track-dot"></div>
+                <span>آماده</span>
+              </div>
+              <div class="track-line" :class="{'active': order.status==='delivered'}"></div>
+              <div class="track-step" :class="{'active': order.status==='delivered'}">
+                <div class="track-dot"></div>
+                <span>تحویل</span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════ ORDER SUCCESS MODAL ═══════════════ -->
+  <div x-show="$store.cart.orderSuccess" class="modal-overlay" x-transition.opacity @click.self="$store.cart.closeSuccess()" style="z-index:600">
+    <div class="modal-box" style="max-width:420px;text-align:center" @click.stop>
+      <div class="text-5xl mb-4">✅</div>
+      <h2 class="text-xl font-black mb-2" style="color:var(--cafe-gold)">سفارش ثبت شد!</h2>
+      <p class="text-sm mb-4" style="color:var(--cafe-text-muted)">شماره سفارش شما:</p>
+      <div class="text-2xl font-black mb-1" style="color:var(--cafe-text)" x-text="$store.cart.orderSuccess?.order_number"></div>
+      <p class="text-sm mb-6" style="color:var(--cafe-text-muted)">
+        مبلغ: <span style="color:var(--cafe-gold);font-weight:800" x-text="$store.cart.formatPrice($store.cart.orderSuccess?.total_price)"></span>
+      </p>
+      <button class="feedback-submit" @click="$store.cart.closeSuccess()" style="max-width:280px;margin:0 auto">
+        پیگیری سفارش
+      </button>
+    </div>
+  </div>
   <div x-show="showFavPanel" x-transition.opacity class="fav-panel-overlay" @click="showFavPanel=false"></div>
   <div x-show="showFavPanel"
        x-transition:enter="transition ease-out duration-300"
@@ -507,6 +685,7 @@
   <script src="js/utils.js"></script>
   <script src="js/data.js"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/cart.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

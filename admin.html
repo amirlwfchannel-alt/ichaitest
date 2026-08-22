@@ -86,6 +86,15 @@
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
         مدیریت محتوا
       </button>
+      <button class="nav-item" :class="{ 'active': activePage === 'orders' }" @click="openOrdersPage()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
+        سفارشات
+        <span x-show="newOrdersCount > 0" class="nav-badge" x-text="toPersianNum(newOrdersCount)"></span>
+      </button>
+      <button class="nav-item" :class="{ 'active': activePage === 'accounting' }" @click="openAccountingPage()">
+        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        حسابداری
+      </button>
     </nav>
 
     <div class="p-4 border-t" style="border-color:var(--admin-border)">
@@ -97,6 +106,11 @@
         <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
         <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         <span x-text="darkMode ? 'حالت روشن' : 'حالت تاریک'"></span>
+      </button>
+      <button @click="toggleSound()" class="nav-item" style="margin-bottom:0.25rem">
+        <svg x-show="soundEnabled" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.536 8.464a5 5 0 010 7.072M18.364 5.636a9 9 0 010 12.728M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/></svg>
+        <svg x-show="!soundEnabled" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.586 15H4a1 1 0 01-1-1v-4a1 1 0 011-1h1.586l4.707-4.707C10.923 3.663 12 4.109 12 5v14c0 .891-1.077 1.337-1.707.707L5.586 15z"/><path stroke-linecap="round" stroke-linejoin="round" d="M17 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2"/></svg>
+        <span x-text="soundEnabled ? 'صدای اعلان روشن' : 'صدای اعلان خاموش'"></span>
       </button>
       <button @click="logout()" class="nav-item" style="margin-bottom:0;color:var(--admin-red)">
         <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
@@ -363,6 +377,233 @@
       </div>
     </div>
 
+    <!-- ─── ORDERS PAGE ─── -->
+    <div x-show="activePage === 'orders'">
+      <div class="admin-topbar">
+        <h1 class="topbar-title">سفارشات</h1>
+        <div class="flex gap-2">
+          <button @click="loadOrders()" class="btn btn-outline btn-sm">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            بروزرسانی
+          </button>
+        </div>
+      </div>
+
+      <!-- Orders Stats -->
+      <div class="grid grid-cols-2 lg:grid-cols-6 gap-3 mb-6">
+        <div class="stat-card" style="padding:0.75rem">
+          <div class="stat-number text-base" x-text="toPersianNum(orderStats.todayCount)">۰</div>
+          <div class="stat-label">سفارشات امروز</div>
+        </div>
+        <div class="stat-card" style="padding:0.75rem">
+          <div class="stat-number text-base" x-text="formatPrice(orderStats.todayRevenue)">۰</div>
+          <div class="stat-label">فروش امروز</div>
+        </div>
+        <div class="stat-card" style="padding:0.75rem;border-left:3px solid #e8c547">
+          <div class="stat-number text-base" x-text="toPersianNum(orderStats.newCount)">۰</div>
+          <div class="stat-label">جدید</div>
+        </div>
+        <div class="stat-card" style="padding:0.75rem;border-left:3px solid #4a90d9">
+          <div class="stat-number text-base" x-text="toPersianNum(orderStats.preparingCount)">۰</div>
+          <div class="stat-label">در حال آماده‌سازی</div>
+        </div>
+        <div class="stat-card" style="padding:0.75rem;border-left:3px solid #28a745">
+          <div class="stat-number text-base" x-text="toPersianNum(orderStats.readyCount)">۰</div>
+          <div class="stat-label">آماده</div>
+        </div>
+        <div class="stat-card" style="padding:0.75rem;border-left:3px solid #dc3545">
+          <div class="stat-number text-base" x-text="toPersianNum(orderStats.cancelledToday)">۰</div>
+          <div class="stat-label">لغو شده امروز</div>
+        </div>
+      </div>
+
+      <!-- Filters -->
+      <div class="flex flex-wrap gap-2 mb-4">
+        <button class="chip" :class="{'active': ordersFilter==='all'}" @click="ordersFilter='all'">همه</button>
+        <button class="chip" :class="{'active': ordersFilter==='new'}" @click="ordersFilter='new'">جدید</button>
+        <button class="chip" :class="{'active': ordersFilter==='preparing'}" @click="ordersFilter='preparing'">آماده‌سازی</button>
+        <button class="chip" :class="{'active': ordersFilter==='ready'}" @click="ordersFilter='ready'">آماده</button>
+        <button class="chip" :class="{'active': ordersFilter==='delivered'}" @click="ordersFilter='delivered'">تحویل شد</button>
+        <button class="chip" :class="{'active': ordersFilter==='cancelled'}" @click="ordersFilter='cancelled'" style="color:#dc3545">لغو شده</button>
+        <input type="text" x-model.debounce.300ms="orderSearchQuery" class="form-input" placeholder="جستجو..." style="max-width:200px">
+      </div>
+
+      <!-- Orders Table -->
+      <div class="data-table-wrapper">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>شماره</th>
+                <th>میز</th>
+                <th>آیتم‌ها</th>
+                <th>مبلغ</th>
+                <th>وضعیت</th>
+                <th>زمان</th>
+                <th>عملیات</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="order in filteredOrders" :key="order.id">
+                <tr :style="order.status === 'new' ? 'background:rgba(232,197,71,0.05)' : ''">
+                  <td class="font-bold text-xs whitespace-nowrap" style="color:var(--admin-text)" x-text="order.order_number"></td>
+                  <td class="text-sm" x-text="order.table_number || '—'"></td>
+                  <td>
+                    <div class="text-xs" style="color:var(--admin-text)" x-text="order.item_count + ' آیتم'"></div>
+                    <template x-if="order.items && order.items.length > 0">
+                      <div class="text-xs mt-0.5" style="color:var(--admin-text-muted)">
+                        <template x-for="item in order.items.slice(0, 3)" :key="item.id">
+                          <div x-text="item.product_name_fa + ' ×' + item.quantity"></div>
+                        </template>
+                        <div x-show="order.items.length > 3" class="text-xs" style="color:var(--admin-text-muted)" x-text="'و ' + (order.items.length - 3) + ' آیتم دیگر'"></div>
+                      </div>
+                    </template>
+                  </td>
+                  <td class="font-bold text-sm" style="color:var(--admin-gold)" x-text="formatPrice(order.total_price)"></td>
+                  <td>
+                    <span class="badge" :style="'background:' + getStatusColor(order.status) + '22;color:' + getStatusColor(order.status)" x-text="getStatusLabel(order.status)"></span>
+                  </td>
+                  <td class="text-xs whitespace-nowrap" style="color:var(--admin-text-muted)" x-text="formatDate(order.created_at)"></td>
+                  <td>
+                    <div class="flex flex-wrap gap-1">
+                      <button x-show="order.status === 'new'" @click="changeOrderStatus(order.id, 'preparing')" class="btn btn-outline btn-sm">شروع آماده‌سازی</button>
+                      <button x-show="order.status === 'preparing'" @click="changeOrderStatus(order.id, 'ready')" class="btn btn-outline btn-sm">آماده شد</button>
+                      <button x-show="order.status === 'ready'" @click="changeOrderStatus(order.id, 'delivered')" class="btn btn-gold btn-sm">تحویل</button>
+                      <button x-show="order.status !== 'delivered' && order.status !== 'cancelled'" @click="changeOrderStatus(order.id, 'cancelled')" class="btn btn-danger btn-sm">لغو</button>
+                      <button @click="confirmDeleteOrder(order)" class="btn btn-danger btn-sm" title="حذف سفارش">
+                        <svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div x-show="filteredOrders.length === 0" class="p-8 text-center" style="color:var(--admin-text-muted)">
+          <p>سفارشی یافت نشد</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── ACCOUNTING PAGE ─── -->
+    <div x-show="activePage === 'accounting'">
+      <div class="admin-topbar">
+        <h1 class="topbar-title">حسابداری</h1>
+        <div class="flex gap-2">
+          <button @click="exportOrdersCSV()" class="btn btn-outline btn-sm">خروجی سفارشات CSV</button>
+          <button @click="exportProductsCSV()" class="btn btn-outline btn-sm">خروجی محصولات CSV</button>
+        </div>
+      </div>
+
+      <!-- Period Selector -->
+      <div class="flex flex-wrap gap-2 mb-6">
+        <button class="chip" :class="{'active': accountingPeriod==='today'}" @click="changeAccountingPeriod('today')">امروز</button>
+        <button class="chip" :class="{'active': accountingPeriod==='7days'}" @click="changeAccountingPeriod('7days')">۷ روز اخیر</button>
+        <button class="chip" :class="{'active': accountingPeriod==='30days'}" @click="changeAccountingPeriod('30days')">۳۰ روز اخیر</button>
+        <button class="chip" :class="{'active': accountingPeriod==='month'}" @click="changeAccountingPeriod('month')">این ماه</button>
+        <button class="chip" :class="{'active': accountingPeriod==='all'}" @click="changeAccountingPeriod('all')">همه</button>
+        <div class="flex gap-2 items-center">
+          <input type="date" x-model="accountingCustomFrom" class="form-input" style="max-width:160px;padding:0.4rem 0.6rem;font-size:0.8rem">
+          <button @click="applyCustomDate()" class="btn btn-outline btn-sm">اعمال</button>
+        </div>
+      </div>
+
+      <!-- KPI Cards -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(184,134,11,0.1);color:var(--admin-gold)">💰</div>
+          <div class="stat-number" x-text="formatPrice(accountingKPIs.totalRevenue)">۰</div>
+          <div class="stat-label">مجموع فروش</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(74,144,217,0.1);color:var(--admin-blue)">📦</div>
+          <div class="stat-number" x-text="toPersianNum(accountingKPIs.totalOrders)">۰</div>
+          <div class="stat-label">تعداد سفارشات</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(40,167,69,0.1);color:var(--admin-green)">📊</div>
+          <div class="stat-number" x-text="formatPrice(accountingKPIs.avgOrder)">۰</div>
+          <div class="stat-label">میانگین سفارش</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6">🏆</div>
+          <div class="stat-number text-base" x-text="accountingKPIs.topProduct?.product_name_fa || '—'">—</div>
+          <div class="stat-label">پرفروش‌ترین</div>
+        </div>
+      </div>
+
+      <!-- Charts Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <!-- Revenue Chart -->
+        <div class="stat-card">
+          <h3 class="text-sm font-bold mb-4" style="color:var(--admin-text)">نمودار فروش</h3>
+          <div style="height:250px;position:relative">
+            <canvas id="revenueChart"></canvas>
+          </div>
+        </div>
+        <!-- Status Chart -->
+        <div class="stat-card">
+          <h3 class="text-sm font-bold mb-4" style="color:var(--admin-text)">وضعیت سفارشات</h3>
+          <div style="height:250px;position:relative">
+            <canvas id="statusChart"></canvas>
+          </div>
+        </div>
+        <!-- Top Products Chart -->
+        <div class="stat-card">
+          <h3 class="text-sm font-bold mb-4" style="color:var(--admin-text)">پرفروش‌ترین محصولات</h3>
+          <div style="height:300px;position:relative">
+            <canvas id="topProductsChart"></canvas>
+          </div>
+        </div>
+        <!-- Hourly Chart -->
+        <div class="stat-card">
+          <h3 class="text-sm font-bold mb-4" style="color:var(--admin-text)">ساعات پیک فروش</h3>
+          <div style="height:300px;position:relative">
+            <canvas id="hourlyChart"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <!-- Product Consumption Table -->
+      <div class="data-table-wrapper">
+        <div class="overflow-x-auto">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>نام محصول</th>
+                <th>تعداد فروخته‌شده</th>
+                <th>درآمد</th>
+                <th>میانگین قیمت</th>
+                <th>سهم از فروش</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="item in productTable" :key="item.name">
+                <tr>
+                  <td class="font-bold text-sm" style="color:var(--admin-text)" x-text="item.name"></td>
+                  <td x-text="toPersianNum(item.qty)"></td>
+                  <td class="font-bold" style="color:var(--admin-gold)" x-text="formatPrice(item.revenue)"></td>
+                  <td x-text="formatPrice(item.avgPrice)"></td>
+                  <td>
+                    <div class="flex items-center gap-2">
+                      <div class="h-2 rounded-full" style="width:80px;background:var(--admin-border)">
+                        <div class="h-2 rounded-full" :style="'width:' + item.share + '%;background:var(--admin-gold)'"></div>
+                      </div>
+                      <span class="text-xs" x-text="toPersianNum(item.share) + '%'"></span>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+        <div x-show="productTable.length === 0" class="p-8 text-center" style="color:var(--admin-text-muted)">
+          <p>اطلاعاتی موجود نیست</p>
+        </div>
+      </div>
+    </div>
+
   </main>
   </div><!-- end isAuthenticated wrapper -->
 
@@ -468,7 +709,7 @@
       </div>
       <p class="text-sm mb-6" style="color:var(--admin-text-muted)">
         آیا از حذف
-        <strong style="color:var(--admin-text)" x-text="deleteTarget?.name_fa"></strong>
+        <strong style="color:var(--admin-text)" x-text="deleteType === 'order' ? 'سفارش ' + (deleteTarget?.order_number || '') : deleteTarget?.name_fa"></strong>
         مطمئن هستید؟ این عمل غیرقابل بازگشت است.
       </p>
       <div class="flex gap-3">
@@ -494,10 +735,13 @@
 
   <!-- Scripts -->
   <script src="lib/supabase.min.js"></script>
+  <script src="lib/chart.min.js"></script>
   <script src="js/config.js"></script>
   <script src="js/utils.js"></script>
   <script src="js/data.js"></script>
   <script src="js/supabase-client.js"></script>
+  <script src="js/realtime.js"></script>
+  <script src="js/accounting.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

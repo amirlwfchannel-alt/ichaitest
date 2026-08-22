@@ -24,6 +24,22 @@ document.addEventListener("alpine:init", () => {
     feedbacks: [],
     cafeInfo: {},
 
+    // Orders state
+    orders: [],
+    _newOrdersCount: 0,
+    ordersFilter: "all",
+    orderSearchQuery: "",
+    soundEnabled: true,
+    ordersLoaded: false,
+
+    // Accounting state
+    accountingData: [],
+    accountingLoaded: false,
+    accountingPeriod: "30days",
+    accountingCustomFrom: "",
+    accountingCustomTo: "",
+    _chartInstances: {},
+
     // UI state
     searchQuery: "",
     showProductModal: false,
@@ -76,12 +92,15 @@ document.addEventListener("alpine:init", () => {
     // Init
     async init() {
       this.loadTheme();
+      this.soundEnabled = Utils.getStorage("admin_sound_enabled", true);
 
       if (SupaDB.init()) {
         const session = await SupaDB.getSession();
         if (session) {
           this.isAuthenticated = true;
           await this.loadData();
+          // Start realtime after data loaded
+          this.$nextTick(() => initRealtimeSystem(this));
           return;
         }
       }
@@ -92,6 +111,7 @@ document.addEventListener("alpine:init", () => {
         this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
         this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
         this.feedbacks = Utils.getStorage("cafe_feedbacks", []);
+        this.orders = Utils.getStorage("cafe_orders", []);
         this.categories.sort((a, b) => a.order - b.order);
         this.products.sort((a, b) => a.order - b.order);
         this.isAuthenticated = true;
@@ -134,6 +154,7 @@ document.addEventListener("alpine:init", () => {
       this.feedbacks = await SupaDB.fetchFeedbacks();
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
+      // Don't auto-load orders here — load on page switch for speed
     },
 
     // Theme
@@ -387,6 +408,12 @@ document.addEventListener("alpine:init", () => {
             (f) => f.id !== this.deleteTarget.id
           );
           this.toast("انتقاد حذف شد");
+        } else if (this.deleteType === "order") {
+          await SupaDB.deleteOrder(this.deleteTarget.id);
+          this.orders = this.orders.filter(
+            (o) => o.id !== this.deleteTarget.id
+          );
+          this.toast("سفارش حذف شد");
         }
       } catch (e) {
         console.error("Delete failed:", e);
@@ -511,7 +538,306 @@ document.addEventListener("alpine:init", () => {
 
     formatDate(dateStr) {
       if (!dateStr) return "—";
-      return Utils.toPersianDate(new Date(dateStr));
+      return Utils.formatDate(dateStr);
+    },
+    getStatusLabel(status) {
+      return Utils.getStatusLabel(status);
+    },
+    getStatusColor(status) {
+      return Utils.getStatusColor(status);
+    },
+
+    // ══════════════════════════════════════════════════
+    // ORDERS PAGE
+    // ══════════════════════════════════════════════════
+
+    async openOrdersPage() {
+      this.activePage = "orders";
+      this.sidebarOpen = false;
+      this._resetTitle();
+      if (!this.ordersLoaded) {
+        await this.loadOrders();
+        this.ordersLoaded = true;
+      }
+    },
+
+    async loadOrders() {
+      try {
+        this.orders = await SupaDB.fetchOrders();
+      } catch (e) {
+        console.error("Load orders failed:", e);
+        this.toast("خطا در بارگذاری سفارشات", "error");
+      }
+    },
+
+    get filteredOrders() {
+      let list = this.orders;
+      if (this.ordersFilter !== "all") {
+        list = list.filter((o) => o.status === this.ordersFilter);
+      }
+      if (this.orderSearchQuery && this.orderSearchQuery.trim()) {
+        const q = this.orderSearchQuery.trim();
+        list = list.filter(
+          (o) =>
+            o.order_number.includes(q) ||
+            (o.table_number && o.table_number.includes(q)) ||
+            (o.customer_name && o.customer_name.includes(q))
+        );
+      }
+      return list;
+    },
+
+    get orderStats() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const todayOrders = this.orders.filter((o) => new Date(o.created_at) >= today);
+      const todayActive = todayOrders.filter((o) => o.status !== "cancelled");
+      return {
+        todayCount: todayActive.length,
+        todayRevenue: todayActive.reduce((s, o) => s + o.total_price, 0),
+        cancelledToday: todayOrders.filter((o) => o.status === "cancelled").length,
+        newCount: this.orders.filter((o) => o.status === "new").length,
+        preparingCount: this.orders.filter((o) => o.status === "preparing").length,
+        readyCount: this.orders.filter((o) => o.status === "ready").length,
+        deliveredCount: this.orders.filter((o) => o.status === "delivered").length,
+      };
+    },
+
+    get newOrdersCount() {
+      return this._newOrdersCount || 0;
+    },
+
+    _resetTitle() {
+      this._newOrdersCount = 0;
+      document.title = "پنل مدیریت — کافه آی‌چای";
+    },
+
+    async changeOrderStatus(orderId, newStatus) {
+      try {
+        await SupaDB.updateOrderStatus(orderId, newStatus);
+        const order = this.orders.find((o) => o.id === orderId);
+        if (order) order.status = newStatus;
+        this.toast("وضعیت تغییر کرد: " + Utils.getStatusLabel(newStatus));
+      } catch (e) {
+        this.toast("خطا در تغییر وضعیت", "error");
+      }
+    },
+
+    confirmDeleteOrder(order) {
+      this.deleteTarget = order;
+      this.deleteType = "order";
+      this.showDeleteModal = true;
+    },
+
+    toggleSound() {
+      this.soundEnabled = !this.soundEnabled;
+      Utils.setStorage("admin_sound_enabled", this.soundEnabled);
+      RealtimeManager.soundEnabled = this.soundEnabled;
+      this.toast(this.soundEnabled ? "صدای اعلان فعال شد" : "صدای اعلان غیرفعال شد");
+    },
+
+    // ══════════════════════════════════════════════════
+    // ACCOUNTING PAGE
+    // ══════════════════════════════════════════════════
+
+    async openAccountingPage() {
+      this.activePage = "accounting";
+      this.sidebarOpen = false;
+      await this.loadAccountingData();
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    async loadAccountingData() {
+      try {
+        await AccountingEngine.loadData(this.accountingPeriod, this.accountingCustomFrom, this.accountingCustomTo);
+        this.accountingData = AccountingEngine.items;
+        this.accountingLoaded = true;
+      } catch (e) {
+        console.error("Load accounting failed:", e);
+        this.toast("خطا در بارگذاری اطلاعات حسابداری", "error");
+      }
+    },
+
+    async changeAccountingPeriod(period) {
+      this.accountingPeriod = period;
+      await this.loadAccountingData();
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    async applyCustomDate() {
+      if (!this.accountingCustomFrom) {
+        this.toast("تاریخ شروع را وارد کنید", "error");
+        return;
+      }
+      this.accountingPeriod = "custom";
+      await this.loadAccountingData();
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    get accountingKPIs() {
+      return AccountingEngine.getKPIs();
+    },
+
+    get topProducts() {
+      return AccountingEngine.getTopProducts(10);
+    },
+
+    get productTable() {
+      return AccountingEngine.getProductTable();
+    },
+
+    renderCharts() {
+      if (!this.accountingLoaded) return;
+      // Destroy existing charts
+      Object.values(this._chartInstances).forEach((c) => {
+        if (c && c.destroy) c.destroy();
+      });
+      this._chartInstances = {};
+
+      // Revenue chart
+      const revEl = document.getElementById("revenueChart");
+      if (revEl) {
+        const revData = AccountingEngine.getRevenueChart();
+        this._chartInstances.revenue = new Chart(revEl, {
+          type: "line",
+          data: {
+            labels: revData.labels,
+            datasets: [
+              {
+                label: "فروش (تومان)",
+                data: revData.values,
+                borderColor: "#b8860b",
+                backgroundColor: "rgba(184,134,11,0.1)",
+                fill: true,
+                tension: 0.4,
+                pointRadius: 3,
+                pointBackgroundColor: "#b8860b",
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: {
+                beginAtZero: true,
+                ticks: {
+                  callback: (v) => Utils.toPersianNum(v),
+                },
+              },
+              x: {
+                ticks: { maxTicksLimit: 7 },
+              },
+            },
+          },
+        });
+      }
+
+      // Status chart
+      const statusEl = document.getElementById("statusChart");
+      if (statusEl) {
+        const statusData = AccountingEngine.getStatusChart();
+        this._chartInstances.status = new Chart(statusEl, {
+          type: "doughnut",
+          data: {
+            labels: ["جدید", "در حال آماده‌سازی", "آماده", "تحویل شد", "لغو شد"],
+            datasets: [
+              {
+                data: [
+                  statusData.new,
+                  statusData.preparing,
+                  statusData.ready,
+                  statusData.delivered,
+                  statusData.cancelled,
+                ],
+                backgroundColor: ["#e8c547", "#4a90d9", "#28a745", "#6c757d", "#dc3545"],
+                borderWidth: 0,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: "65%",
+            plugins: {
+              legend: { position: "bottom", labels: { padding: 12 } },
+            },
+          },
+        });
+      }
+
+      // Top products chart
+      const topEl = document.getElementById("topProductsChart");
+      if (topEl) {
+        const topData = AccountingEngine.getTopProducts(10);
+        this._chartInstances.topProducts = new Chart(topEl, {
+          type: "bar",
+          data: {
+            labels: topData.map((p) => p.product_name_fa),
+            datasets: [
+              {
+                label: "تعداد فروش",
+                data: topData.map((p) => p.qty),
+                backgroundColor: "#b8860b",
+                borderRadius: 6,
+              },
+            ],
+          },
+          options: {
+            indexAxis: "y",
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { beginAtZero: true, ticks: { callback: (v) => Utils.toPersianNum(v) } },
+            },
+          },
+        });
+      }
+
+      // Hourly chart
+      const hourEl = document.getElementById("hourlyChart");
+      if (hourEl) {
+        const hourData = AccountingEngine.getHourlyData();
+        this._chartInstances.hourly = new Chart(hourEl, {
+          type: "bar",
+          data: {
+            labels: Array.from({ length: 24 }, (_, i) => Utils.toPersianNum(i) + ":00"),
+            datasets: [
+              {
+                label: "تعداد سفارش",
+                data: hourData,
+                backgroundColor: "rgba(184,134,11,0.3)",
+                borderColor: "#b8860b",
+                borderWidth: 1,
+                borderRadius: 4,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              y: { beginAtZero: true, ticks: { stepSize: 1, callback: (v) => Utils.toPersianNum(v) } },
+              x: { ticks: { maxTicksLimit: 12 } },
+            },
+          },
+        });
+      }
+    },
+
+    exportOrdersCSV() {
+      AccountingEngine.orders = this.orders;
+      AccountingEngine.exportOrdersCSV();
+      this.toast("فایل CSV سفارشات دانلود شد");
+    },
+
+    exportProductsCSV() {
+      AccountingEngine.items = this.accountingData;
+      AccountingEngine.exportProductsCSV();
+      this.toast("فایل CSV محصولات دانلود شد");
     },
   }));
 });

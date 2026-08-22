@@ -341,6 +341,310 @@ const SupaDB = {
     if (error) throw error;
   },
 
+  // ══════════════════════════════════════════════════════
+  // ORDERS — Live Order System
+  // ══════════════════════════════════════════════════════
+
+  /**
+   * Generate a unique order number: ORD-YYYYMMDD-XXXX
+   */
+  _generateOrderNumber() {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    const seq = String(Math.floor(Math.random() * 9000) + 1000);
+    return `ORD-${y}${m}${d}-${seq}`;
+  },
+
+  /**
+   * Create a new order with items in one transaction.
+   * Returns the created order with its items.
+   */
+  async createOrder(orderData) {
+    if (!this.ready) {
+      // Offline fallback: save to localStorage
+      const order = {
+        id: "ord-" + Date.now(),
+        order_number: this._generateOrderNumber(),
+        status: "new",
+        customer_name: orderData.customer_name || "",
+        table_number: orderData.table_number || "",
+        phone: orderData.phone || "",
+        notes: orderData.notes || "",
+        total_price: orderData.total_price,
+        item_count: orderData.items.length,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        items: orderData.items.map((it) => ({
+          id: Utils.generateId(),
+          order_id: "ord-" + Date.now(),
+          product_id: it.product_id,
+          product_name_fa: it.product_name_fa,
+          product_image_url: it.product_image_url || null,
+          product_price: it.product_price,
+          quantity: it.quantity,
+          subtotal: it.subtotal,
+          created_at: new Date().toISOString(),
+        })),
+      };
+      this._localSave("cafe_orders", order);
+      return order;
+    }
+
+    // Sanitize order
+    const orderNumber = this._generateOrderNumber();
+    const sanitized = {
+      order_number: orderNumber,
+      status: "new",
+      customer_name: String(orderData.customer_name || "").slice(0, 100),
+      table_number: String(orderData.table_number || "").slice(0, 20),
+      phone: String(orderData.phone || "").slice(0, 20),
+      notes: String(orderData.notes || "").slice(0, 500),
+      total_price: Math.max(0, Math.floor(Number(orderData.total_price) || 0)),
+      item_count: orderData.items.length,
+    };
+
+    // Insert order
+    const { data: order, error: orderError } = await this.client
+      .from("orders")
+      .insert(sanitized)
+      .select()
+      .single();
+    if (orderError) throw orderError;
+
+    // Insert items
+    const items = orderData.items.map((it) => ({
+      order_id: order.id,
+      product_id: it.product_id || null,
+      product_name_fa: String(it.product_name_fa || "").slice(0, 200),
+      product_image_url: it.product_image_url || null,
+      product_price: Math.max(0, Math.floor(Number(it.product_price) || 0)),
+      quantity: Math.max(1, Math.floor(Number(it.quantity) || 1)),
+      subtotal: Math.max(0, Math.floor(Number(it.subtotal) || 0)),
+    }));
+
+    const { error: itemsError } = await this.client
+      .from("order_items")
+      .insert(items);
+    if (itemsError) throw itemsError;
+
+    return { ...order, items };
+  },
+
+  /**
+   * Fetch orders with optional status filter.
+   * For admin: authenticated (needs service role or admin session).
+   * For public: uses anon key + RLS allows SELECT.
+   */
+  async fetchOrders(options = {}) {
+    if (!this.ready) return Utils.getStorage("cafe_orders", []);
+    try {
+      let query = this.client
+        .from("orders")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (options.status) {
+        query = query.eq("status", options.status);
+      }
+      if (options.limit) {
+        query = query.limit(options.limit);
+      }
+      if (options.since) {
+        query = query.gte("created_at", options.since);
+      }
+      if (options.order_number) {
+        query = query.eq("order_number", options.order_number);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      console.warn("Supabase fetch orders failed:", e);
+      return Utils.getStorage("cafe_orders", []);
+    }
+  },
+
+  /**
+   * Fetch order items for a given order ID.
+   */
+  async fetchOrderItems(orderId) {
+    if (!this.ready) return [];
+    try {
+      const { data, error } = await this.client
+        .from("order_items")
+        .select("*")
+        .eq("order_id", orderId)
+        .order("created_at");
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      console.warn("Supabase fetch order items failed:", e);
+      return [];
+    }
+  },
+
+  /**
+   * Fetch order with its items.
+   */
+  async fetchOrderWithItems(orderId) {
+    const order = await this.fetchOrders({ order_number: orderId });
+    if (!order || order.length === 0) return null;
+    const items = await this.fetchOrderItems(order[0].id);
+    return { ...order[0], items };
+  },
+
+  /**
+   * Update order status.
+   */
+  async updateOrderStatus(orderId, newStatus) {
+    if (!this.ready) {
+      const orders = Utils.getStorage("cafe_orders", []);
+      const idx = orders.findIndex((o) => o.id === orderId);
+      if (idx > -1) {
+        orders[idx].status = newStatus;
+        orders[idx].updated_at = new Date().toISOString();
+        Utils.setStorage("cafe_orders", orders);
+      }
+      return;
+    }
+    const validStatuses = ["new", "preparing", "ready", "delivered", "cancelled"];
+    if (!validStatuses.includes(newStatus)) {
+      throw new Error("Invalid status: " + newStatus);
+    }
+    const { error } = await this.client
+      .from("orders")
+      .update({ status: newStatus })
+      .eq("id", orderId);
+    if (error) throw error;
+  },
+
+  /**
+   * Delete an order and its items (hard delete).
+   */
+  async deleteOrder(orderId) {
+    if (!this.ready) {
+      return this._localDelete("cafe_orders", orderId);
+    }
+    if (!orderId) throw new Error("Order ID is required");
+    // Delete items first (CASCADE should handle this, but be explicit)
+    const { error: itemsError } = await this.client
+      .from("order_items")
+      .delete()
+      .eq("order_id", orderId);
+    if (itemsError) throw itemsError;
+    // Delete the order
+    const { error } = await this.client
+      .from("orders")
+      .delete()
+      .eq("id", orderId);
+    if (error) throw error;
+  },
+
+  /**
+   * Subscribe to order changes (Realtime).
+   * Returns the channel object for unsubscription.
+   */
+  subscribeOrders(callback) {
+    if (!this.ready) return null;
+    const channel = this.client
+      .channel("orders-realtime")
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "orders" },
+        (payload) => callback("INSERT", payload.new)
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
+        (payload) => callback("UPDATE", payload.new)
+      )
+      .subscribe();
+    return channel;
+  },
+
+  /**
+   * Unsubscribe from order changes.
+   */
+  unsubscribeOrders(channel) {
+    if (channel && this.ready) {
+      this.client.removeChannel(channel);
+    }
+  },
+
+  // ══════════════════════════════════════════════════════
+  // ACCOUNTING — Dashboard Aggregations
+  // ══════════════════════════════════════════════════════
+
+  /**
+   * Fetch all order items for accounting (with order join).
+   * Uses a single query for efficiency.
+   */
+  async fetchAccountingData(since) {
+    if (!this.ready) {
+      const orders = Utils.getStorage("cafe_orders", []);
+      const items = [];
+      for (const o of orders) {
+        if (o.items) {
+          for (const it of o.items) {
+            items.push({ ...it, order_status: o.status, order_created_at: o.created_at });
+          }
+        }
+      }
+      return items;
+    }
+    try {
+      let query = this.client
+        .from("orders")
+        .select("id, order_number, status, total_price, item_count, created_at, updated_at")
+        .order("created_at", { ascending: false });
+
+      if (since) {
+        query = query.gte("created_at", since);
+      }
+
+      const { data: orders, error: ordersError } = await query;
+      if (ordersError) throw ordersError;
+      if (!orders || orders.length === 0) return [];
+
+      // Fetch all order items in batches
+      const orderIds = orders.map((o) => o.id);
+      const orderMap = {};
+      for (const o of orders) {
+        orderMap[o.id] = o;
+      }
+
+      // Fetch items in parallel batches of 100
+      const allItems = [];
+      for (let i = 0; i < orderIds.length; i += 100) {
+        const batch = orderIds.slice(i, i + 100);
+        const { data: batchItems, error: itemsError } = await this.client
+          .from("order_items")
+          .select("*")
+          .in("order_id", batch);
+        if (itemsError) throw itemsError;
+        if (batchItems) {
+          for (const item of batchItems) {
+            const order = orderMap[item.order_id];
+            allItems.push({
+              ...item,
+              order_status: order ? order.status : "unknown",
+              order_created_at: order ? order.created_at : null,
+              order_number: order ? order.order_number : "",
+            });
+          }
+        }
+      }
+
+      return allItems;
+    } catch (e) {
+      console.warn("Supabase fetch accounting data failed:", e);
+      return [];
+    }
+  },
+
   _sanitizeProduct(product) {
     return {
       id: String(product.id || "").slice(0, 50),
