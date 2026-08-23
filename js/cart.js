@@ -151,13 +151,50 @@ document.addEventListener("alpine:init", () => {
     },
 
     // ── Tracking ──
-    refreshTracking() {
+    async refreshTracking() {
       this.myOrders = OrderCookie.getOrders();
+      await this.syncOrderStatuses();
+    },
+
+    /**
+     * Pull latest statuses from Supabase for the orders this browser placed.
+     * Falls back silently to cached statuses when offline / unconfigured.
+     */
+    async syncOrderStatuses() {
+      if (!SupaDB.ready || this.myOrders.length === 0) return;
+      try {
+        const numbers = this.myOrders.map((o) => o.order_number);
+        const fresh = await SupaDB.fetchOrdersByNumbers(numbers);
+        let changed = false;
+        for (const o of this.myOrders) {
+          const f = fresh.find((x) => x.order_number === o.order_number);
+          if (!f) continue;
+          // Display-only fallback: 20 min after creation an untouched order
+          // shows as delivered. The real DB write is done by the admin panel
+          // (anon users cannot UPDATE per RLS).
+          const ageMin = (Utils.now() - new Date(o.created_at)) / 60000;
+          let effective = f.status;
+          if (["new", "preparing", "ready"].includes(effective) && ageMin >= 20) {
+            effective = "delivered";
+          }
+          if (effective !== o.status) {
+            o.status = "delivered";
+            OrderCookie.updateStatus(o.order_number, "delivered");
+            changed = true;
+          }
+        }
+        if (changed) {
+          this.myOrders = [...this.myOrders];
+        }
+      } catch (e) {
+        console.warn("Tracking sync failed:", e);
+      }
     },
     closeSuccess() {
       this.orderSuccess = null;
       this.activeTab = "track";
       this.myOrders = OrderCookie.getOrders();
+      this.syncOrderStatuses();
     },
     getStatusLabel(s) {
       return Utils.getStatusLabel(s);

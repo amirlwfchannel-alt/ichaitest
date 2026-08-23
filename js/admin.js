@@ -561,9 +561,41 @@ document.addEventListener("alpine:init", () => {
       }
     },
 
+    /**
+     * Auto-mark stale orders as delivered: any active order older than
+     * 20 minutes (Iran time, server-corrected clock) becomes 'delivered'.
+     * Runs on load and then every minute; DB update only when needed.
+     */
+    async autoDeliverStale() {
+      if (!SupaDB.ready) return;
+      const nowMs = Utils.now().getTime();
+      for (const o of this.orders) {
+        if (!["new", "preparing", "ready"].includes(o.status)) continue;
+        const ageMin = (nowMs - new Date(o.created_at).getTime()) / 60000;
+        if (ageMin >= 20) {
+          try {
+            await SupaDB.updateOrderStatus(o.id, "delivered");
+            o.status = "delivered";
+          } catch (e) {
+            console.warn("Auto-deliver failed for", o.order_number, e);
+          }
+        }
+      }
+    },
+
+    startAutoDeliverTimer() {
+      if (this._autoDeliverTimer) clearInterval(this._autoDeliverTimer);
+      this._autoDeliverTimer = setInterval(() => {
+        if (!SupaDB.ready || !this.ordersLoaded) return;
+        this.autoDeliverStale();
+      }, 60 * 1000);
+    },
+
     async loadOrders() {
       try {
         this.orders = await SupaDB.fetchOrders();
+        await this.autoDeliverStale();
+        this.startAutoDeliverTimer();
       } catch (e) {
         console.error("Load orders failed:", e);
         this.toast("خطا در بارگذاری سفارشات", "error");

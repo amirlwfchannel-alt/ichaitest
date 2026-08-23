@@ -67,7 +67,8 @@ const AccountingEngine = {
     const active = this.orders.filter((o) => o.status !== "cancelled");
     const daily = {};
     for (const o of active) {
-      const day = o.created_at.slice(0, 10);
+      // Jalali day label in Iran time (e.g. «۱۴۰۵/۰۶/۰۱»)
+      const day = Utils.formatDate(o.created_at).split("،")[0].trim();
       daily[day] = (daily[day] || 0) + o.total_price;
     }
     const sorted = Object.entries(daily).sort((a, b) => a[0].localeCompare(b[0]));
@@ -116,8 +117,14 @@ const AccountingEngine = {
     const hours = new Array(24).fill(0);
     for (const o of this.orders) {
       if (o.status === "cancelled") continue;
-      const h = new Date(o.created_at).getHours();
-      hours[h]++;
+      // Hour in Iran time regardless of device clock/timezone
+      const parts = new Intl.DateTimeFormat("en-US", {
+        timeZone: Utils.TZ_IRAN,
+        hour12: false,
+        hour: "2-digit",
+      }).formatToParts(new Date(o.created_at));
+      const h = Number(parts.find((p) => p.type === "hour").value);
+      if (!isNaN(h)) hours[h]++;
     }
     return hours;
   },
@@ -172,7 +179,7 @@ const AccountingEngine = {
         { key: "customer_name", label: "نام مشتری" },
         { key: "created_at", label: "تاریخ" },
       ],
-      "ichai-orders-" + new Date().toISOString().slice(0, 10) + ".csv"
+      "ichai-orders-" + Utils.formatDate(Utils.now()).replace(/[^\w\u0600-\u06FF]+/g, "-") + ".csv"
     );
   },
 
@@ -187,7 +194,7 @@ const AccountingEngine = {
         { key: "avgPrice", label: "میانگین قیمت" },
         { key: "share", label: "سهم از فروش (%)" },
       ],
-      "ichai-products-" + new Date().toISOString().slice(0, 10) + ".csv"
+      "ichai-products-" + Utils.formatDate(Utils.now()).replace(/[^\w\u0600-\u06FF]+/g, "-") + ".csv"
     );
   },
 };

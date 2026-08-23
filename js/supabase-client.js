@@ -494,6 +494,24 @@ const SupaDB = {
   },
 
   /**
+   * Fetch orders matching a list of order numbers (customer tracking sync).
+   */
+  async fetchOrdersByNumbers(numbers) {
+    if (!this.ready || !numbers || numbers.length === 0) return [];
+    try {
+      const { data, error } = await this.client
+        .from("orders")
+        .select("id,order_number,status,total_price,item_count,created_at")
+        .in("order_number", numbers);
+      if (error) throw error;
+      return data || [];
+    } catch (e) {
+      console.warn("Fetch orders by numbers failed:", e);
+      return [];
+    }
+  },
+
+  /**
    * Fetch order items for a given order ID.
    */
   async fetchOrderItems(orderId) {
