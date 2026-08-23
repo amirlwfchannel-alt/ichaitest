@@ -476,6 +476,9 @@ const SupaDB = {
       if (options.since) {
         query = query.gte("created_at", options.since);
       }
+      if (options.until) {
+        query = query.lte("created_at", options.until);
+      }
       if (options.order_number) {
         query = query.eq("order_number", options.order_number);
       }
@@ -649,7 +652,7 @@ const SupaDB = {
    * Fetch all order items for accounting (with order join).
    * Uses a single query for efficiency.
    */
-  async fetchAccountingData(since) {
+  async fetchAccountingData(since, until) {
     if (!this.ready) {
       const orders = Utils.getStorage("cafe_orders", []);
       const items = [];
@@ -670,6 +673,9 @@ const SupaDB = {
 
       if (since) {
         query = query.gte("created_at", since);
+      }
+      if (until) {
+        query = query.lte("created_at", until);
       }
 
       const { data: orders, error: ordersError } = await query;

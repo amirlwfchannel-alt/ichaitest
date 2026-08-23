@@ -107,13 +107,14 @@ document.addEventListener("alpine:init", () => {
     },
 
     // ── Persian text normalization for search ──
-    // Arabic Yeh/Kaf → Farsi, ZWNJ/taachdid/tatweel removed, digits unified,
-    // collapse whitespace, lowercase (for any latin text).
+    // Arabic Yeh/Kaf → Farsi, Alef variants unified, Heh variants unified,
+    // ZWNJ/harakat/tatweel removed, digits unified, whitespace collapsed.
     _norm(s) {
       return (s || "")
         .toString()
         .replace(/[يى]/g, "ی")
         .replace(/[كک]/g, "ک")
+        .replace(/[أإآٱ]/g, "ا")
         .replace(/[ۀة]/g, "ه")
         .replace(/[\u200c\u064b-\u0652\u0640]/g, "") // ZWNJ, harakat, tatweel
         .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))

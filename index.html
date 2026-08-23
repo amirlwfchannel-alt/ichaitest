@@ -40,10 +40,10 @@
   </script>
 
   <!-- Alpine.js (local) -->
-  <script defer src="lib/alpine.min.js"></script>
+  <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/main.css">
+  <link rel="stylesheet" href="css/main.css?v=20260823b">
 </head>
 
 <body class="font-cafe" x-data="cafeMenu" x-cloak>
@@ -621,14 +621,23 @@
     </div>
   </div>
 
-  <!-- ═══════════════ ORDER SUCCESS MODAL ═══════════════ -->
+  <!-- ═══════════════ ORDER SUCCESS MODAL (animated green) ═══════════════ -->
   <div x-show="$store.cart.orderSuccess" class="modal-overlay" x-transition.opacity @click.self="$store.cart.closeSuccess()" style="z-index:600">
-    <div class="modal-box" style="max-width:420px;text-align:center" @click.stop>
-      <div class="text-5xl mb-4">✅</div>
-      <h2 class="text-xl font-black mb-2" style="color:var(--cafe-gold)">سفارش ثبت شد!</h2>
-      <p class="text-sm mb-4" style="color:var(--cafe-text-muted)">شماره سفارش شما:</p>
-      <div class="text-2xl font-black mb-1" style="color:var(--cafe-text)" x-text="$store.cart.orderSuccess?.order_number"></div>
-      <p class="text-sm mb-6" style="color:var(--cafe-text-muted)">
+    <div class="modal-box" style="max-width:420px;text-align:center;overflow:hidden;position:relative" @click.stop>
+      <!-- confetti pieces -->
+      <template x-for="i in 14" :key="'cf'+i">
+        <span class="order-confetti" :style="'--cx:' + ((i * 37) % 100) + ';--cd:' + (0.15 + (i % 5) * 0.12) + 's'"></span>
+      </template>
+      <div class="success-ring">
+        <svg viewBox="0 0 52 52" class="success-checkmark">
+          <circle cx="26" cy="26" r="24" fill="none"/>
+          <path fill="none" d="M14 27l8 8 16-17"/>
+        </svg>
+      </div>
+      <h2 class="text-xl font-black mb-2" style="color:#28a745">سفارش شما ثبت شد! 🎉</h2>
+      <p class="text-sm mb-3" style="color:var(--cafe-text-muted)">کافه در حال آماده‌سازی سفارش شماست</p>
+      <div class="order-number-pill" x-text="$store.cart.orderSuccess?.order_number"></div>
+      <p class="text-sm mt-3 mb-6" style="color:var(--cafe-text-muted)">
         مبلغ: <span style="color:var(--cafe-gold);font-weight:800" x-text="formatPrice($store.cart.orderSuccess?.total_price)"></span>
       </p>
       <button class="feedback-submit" @click="$store.cart.closeSuccess()" style="max-width:280px;margin:0 auto">
@@ -680,11 +689,11 @@
 
   <!-- Scripts -->
   <script src="lib/supabase.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/supabase-client.js"></script>
-  <script src="js/cart.js"></script>
-  <script src="js/app.js"></script>
+  <script src="js/config.js?v=20260823b"></script>
+  <script src="js/utils.js?v=20260823b"></script>
+  <script src="js/data.js?v=20260823b"></script>
+  <script src="js/supabase-client.js?v=20260823b"></script>
+  <script src="js/cart.js?v=20260823b"></script>
+  <script src="js/app.js?v=20260823b"></script>
 </body>
 </html>

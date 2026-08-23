@@ -23,9 +23,9 @@
   </script>
 
   <!-- Alpine.js (local) -->
-  <script defer src="lib/alpine.min.js"></script>
+  <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
-  <link rel="stylesheet" href="css/admin.css">
+  <link rel="stylesheet" href="css/admin.css?v=20260823b">
 </head>
 
 <body class="admin-body font-fa" x-data="adminPanel" :class="{ 'dark-mode': darkMode }">
@@ -509,8 +509,8 @@
         <button class="chip" :class="{'active': accountingPeriod==='month'}" @click="changeAccountingPeriod('month')">این ماه</button>
         <button class="chip" :class="{'active': accountingPeriod==='all'}" @click="changeAccountingPeriod('all')">همه</button>
         <div class="flex gap-1 items-center">
-          <select x-model.number="jalaliDay" class="form-input" style="width:70px;padding:0.4rem 0.3rem;font-size:0.8rem">
-            <template x-for="d in 31" :key="d"><option :value="d" x-text="toPersianNum(d)"></option></template>
+          <select x-model.number="jalaliDay" class="form-input" style="width:70px;padding:0.4rem 0.3rem;font-size:0.8rem" @change="if(jalaliDay > jalaliDaysInMonth()) jalaliDay = jalaliDaysInMonth()">
+            <template x-for="d in jalaliDaysInMonth()" :key="d"><option :value="d" x-text="toPersianNum(d)"></option></template>
           </select>
           <select x-model.number="jalaliMonth" class="form-input" style="width:110px;padding:0.4rem 0.3rem;font-size:0.8rem">
             <template x-for="(m,i) in ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند']" :key="i">
@@ -751,12 +751,12 @@
   <!-- Scripts -->
   <script src="lib/supabase.min.js"></script>
   <script src="lib/chart.min.js"></script>
-  <script src="js/config.js"></script>
-  <script src="js/utils.js"></script>
-  <script src="js/data.js"></script>
-  <script src="js/supabase-client.js"></script>
-  <script src="js/realtime.js"></script>
-  <script src="js/accounting.js"></script>
-  <script src="js/admin.js"></script>
+  <script src="js/config.js?v=20260823b"></script>
+  <script src="js/utils.js?v=20260823b"></script>
+  <script src="js/data.js?v=20260823b"></script>
+  <script src="js/supabase-client.js?v=20260823b"></script>
+  <script src="js/realtime.js?v=20260823b"></script>
+  <script src="js/accounting.js?v=20260823b"></script>
+  <script src="js/admin.js?v=20260823b"></script>
 </body>
 </html>

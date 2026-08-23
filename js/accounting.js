@@ -26,11 +26,15 @@ const AccountingEngine = {
     }
 
     // Fetch orders
-    this.orders = await SupaDB.fetchOrders({ since });
-    // Fetch items
-    this.items = await SupaDB.fetchAccountingData(since);
+    const options = { since };
+    // Respect the upper bound too — "go to a specific day" must show ONLY that day.
+    if (this.period === "custom" && this.customFrom && this.customTo) {
+      options.until = this.customTo;
+    }
+    this.orders = await SupaDB.fetchOrders(options);
+    // Fetch items (same window)
+    this.items = await SupaDB.fetchAccountingData(since, this.period === "custom" ? this.customTo : null);
 
-    // Filter cancelled from revenue
     return this;
   },
 

@@ -220,12 +220,14 @@ document.addEventListener("alpine:init", () => {
       );
     },
 
-    // Persian normalization: Arabic Yeh/Kaf → Farsi, strip ZWNJ/diacritics
+    // Persian normalization: Arabic Yeh/Kaf → Farsi, Alef/Heh variants unified,
+    // strip ZWNJ/diacritics
     _normFa(s) {
       return (s || "")
         .toString()
         .replace(/[يى]/g, "ی")
         .replace(/[ك]/g, "ک")
+        .replace(/[أإآٱ]/g, "ا")
         .replace(/[ۀة]/g, "ه")
         .replace(/[\u200c\u064b-\u0652\u0640]/g, "")
         .replace(/\s+/g, " ")
@@ -745,7 +747,8 @@ document.addEventListener("alpine:init", () => {
       }
       const from = Utils.jalaliToUtc(this.jalaliYear, this.jalaliMonth, this.jalaliDay);
       if (!from) {
-        this.toast("تاریخ نامعتبر است", "error");
+        // e.g. 30th/31st of a month that doesn't have it
+        this.toast("این روز در این ماه وجود ندارد", "error");
         return;
       }
       const to = new Date(from.getTime() + 86400000 - 1);
@@ -753,7 +756,21 @@ document.addEventListener("alpine:init", () => {
       await AccountingEngine.loadData("custom", from.toISOString(), to.toISOString());
       this.accountingData = AccountingEngine.items;
       this.accountingLoaded = true;
+      const label =
+        Utils.toPersianNum(this.jalaliDay) + " " +
+        (["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"][this.jalaliMonth - 1] || "") +
+        " " + Utils.toPersianNum(this.jalaliYear);
+      this.toast("نمایش فروش روز " + label);
       this.$nextTick(() => this.renderCharts());
+    },
+
+    /** Days in the selected Jalali month (29/30/31, leap-year aware). */
+    jalaliDaysInMonth() {
+      if (!this.jalaliYear || !this.jalaliMonth) return 31;
+      for (let d = 31; d >= 29; d--) {
+        if (Utils.jalaliToUtc(this.jalaliYear, this.jalaliMonth, d)) return d;
+      }
+      return 30;
     },
 
     jalaliYearOptions() {

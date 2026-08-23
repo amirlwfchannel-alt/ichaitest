@@ -11,7 +11,7 @@ const SoundManager = {
 
   init() {
     try {
-      this.audio = new Audio("assets/sounds/new-order.mp3");
+      this.audio = new Audio("assets/sounds/order-bell.mp3");
       this.audio.volume = 0.7;
       this.audio.preload = "auto";
       this.audio.addEventListener("canplaythrough", () => {

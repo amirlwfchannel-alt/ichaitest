@@ -169,17 +169,16 @@ document.addEventListener("alpine:init", () => {
         for (const o of this.myOrders) {
           const f = fresh.find((x) => x.order_number === o.order_number);
           if (!f) continue;
-          // Display-only fallback: 20 min after creation an untouched order
-          // shows as delivered. The real DB write is done by the admin panel
-          // (anon users cannot UPDATE per RLS).
+          // Display-only fallback: a "new" order untouched by the admin for
+          // 20+ minutes shows as delivered. Real admin-set statuses always win.
           const ageMin = (Utils.now() - new Date(o.created_at)) / 60000;
           let effective = f.status;
-          if (["new", "preparing", "ready"].includes(effective) && ageMin >= 20) {
+          if (effective === "new" && ageMin >= 20) {
             effective = "delivered";
           }
           if (effective !== o.status) {
-            o.status = "delivered";
-            OrderCookie.updateStatus(o.order_number, "delivered");
+            o.status = effective;
+            OrderCookie.updateStatus(o.order_number, effective);
             changed = true;
           }
         }
@@ -201,6 +200,15 @@ document.addEventListener("alpine:init", () => {
     },
     getStatusColor(s) {
       return Utils.getStatusColor(s);
+    },
+    // Defensive shims: some HTML views historically called these on the
+    // store directly. Keep them here so old/cached markup can never crash
+    // the order-success flow again.
+    formatPrice(t) {
+      return Utils.formatPrice(t);
+    },
+    toPersianNum(n) {
+      return Utils.toPersianNum(n);
     },
   });
 });
