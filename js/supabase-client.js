@@ -333,6 +333,151 @@ const SupaDB = {
     }
   },
 
+  // ════════════════════════════════════════════
+  // DEVELOPER ANALYTICS (smart visit tracking)
+  // ════════════════════════════════════════════
+
+  /**
+   * Log a visit via RPC. The DB function deduplicates: max one row per
+   * visitor per 30 minutes. Silent no-op when offline/unconfigured.
+   */
+  async logVisit(visitorId, path) {
+    if (!this.ready || !visitorId) return;
+    try {
+      const { error } = await this.client.rpc("log_visit", {
+        p_visitor_id: String(visitorId).slice(0, 80),
+        p_path: String(path || "/").slice(0, 100),
+      });
+      if (error) console.warn("logVisit failed:", error.message);
+    } catch (e) {
+      /* never break the page for analytics */
+    }
+  },
+
+  /**
+   * Aggregate visit stats for the developer dashboard.
+   * Returns { today, yesterday, week, month, total, uniqueVisitors,
+   *            daily: [{day:'Jalali label', count}] } — daily covers last 14 days.
+   */
+  async fetchVisitStats() {
+    if (!this.ready) return null;
+    try {
+      const since = new Date(Date.now() - 14 * 86400000).toISOString();
+      const { data, error } = await this.client
+        .from("visit_logs")
+        .select("visitor_id, created_at")
+        .gte("created_at", since)
+        .order("created_at", { ascending: true });
+      if (error) throw error;
+
+      const rows = data || [];
+      const nowTehran = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Tehran",
+        year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(Utils.now());
+      const yesterTehran = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Tehran",
+        year: "numeric", month: "2-digit", day: "2-digit",
+      }).format(new Date(Utils.now().getTime() - 86400000));
+
+      let today = 0, yesterday = 0;
+      const dayMap = {};   // yyyy-mm-dd(Tehran) -> count
+      const visitors = new Set();
+
+      for (const r of rows) {
+        const d = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Tehran",
+          year: "numeric", month: "2-digit", day: "2-digit",
+        }).format(new Date(r.created_at));
+        dayMap[d] = (dayMap[d] || 0) + 1;
+        visitors.add(r.visitor_id);
+        if (d === nowTehran) today++;
+        else if (d === yesterTehran) yesterday++;
+      }
+
+      // 7/30-day windows from the same 14-day fetch where possible
+      const week = rows.filter((r) => new Date(r.created_at) >= new Date(Date.now() - 7 * 86400000)).length;
+      const totalRow = await this.client
+        .from("visit_logs")
+        .select("id", { count: "exact", head: true });
+      const month = rows.length; // within available window
+
+      // Jalali labels for chart (last 14 days)
+      const daily = [];
+      for (let i = 13; i >= 0; i--) {
+        const dt = new Date(Date.now() + this._clockOffsetMs - i * 86400000);
+        const key = new Intl.DateTimeFormat("en-CA", {
+          timeZone: "Asia/Tehran",
+          year: "numeric", month: "2-digit", day: "2-digit",
+        }).format(dt);
+        daily.push({
+          key,
+          label: Utils.formatDateShort(key + "T12:00:00+03:30"),
+          count: dayMap[key] || 0,
+        });
+      }
+
+      return {
+        today,
+        yesterday,
+        week,
+        month,
+        total: totalRow.count ?? null,
+        uniqueVisitors: visitors.size,
+        daily,
+      };
+    } catch (e) {
+      console.warn("fetchVisitStats failed:", e);
+      return null;
+    }
+  },
+
+  /**
+   * Database usage overview: row counts per table (+ estimated size).
+   * Uses exact counts on small tables; head-count for orders/items.
+   */
+  async fetchDbUsage() {
+    if (!this.ready) return null;
+    const countOf = async (table) => {
+      try {
+        const { count } = await this.client
+          .from(table)
+          .select("id", { count: "exact", head: true });
+        return count ?? 0;
+      } catch {
+        return -1;
+      }
+    };
+    const [products, categories, orders, orderItems, feedbacks, visits] =
+      await Promise.all([
+        countOf("products"),
+        countOf("categories"),
+        countOf("orders"),
+        countOf("order_items"),
+        countOf("feedbacks"),
+        countOf("visit_logs"),
+      ]);
+    // Rough size estimate: avg row widths (bytes) measured conservatively
+    const estKB =
+      (products * 0.6 +
+        categories * 0.15 +
+        orders * 0.4 +
+        orderItems * 0.35 +
+        feedbacks * 1.2 +
+        visits * 0.15) / 1;
+    return {
+      tables: [
+        { name: "محصولات", table: "products", rows: products },
+        { name: "دسته‌بندی‌ها", table: "categories", rows: categories },
+        { name: "سفارش‌ها", table: "orders", rows: orders },
+        { name: "آیتم سفارش‌ها", table: "order_items", rows: orderItems },
+        { name: "بازخوردها", table: "feedbacks", rows: feedbacks },
+        { name: "لاگ بازدید", table: "visit_logs", rows: visits },
+      ],
+      estKB: Math.round(estKB),
+    };
+  },
+
   async fetchFeedbacks() {
     await this.cleanOldFeedbacks();
     if (!this.ready) return Utils.getStorage("cafe_feedbacks", []);

@@ -48,10 +48,23 @@ document.addEventListener("alpine:init", () => {
       this.products.sort((a, b) => a.order - b.order);
     },
 
-    // Track site visits
+    // Track site visits (smart, privacy-friendly, session-deduplicated)
     trackVisit() {
       const visits = Utils.getStorage("cafe_visit_count", 0) + 1;
       Utils.setStorage("cafe_visit_count", visits);
+      // Server-side smart visit log (30-min session dedup via RPC)
+      try {
+        let vid = Utils.getStorage("ichai_visitor_id", null);
+        if (!vid) {
+          vid = Utils.generateId() + "-" + Date.now().toString(36);
+          Utils.setStorage("ichai_visitor_id", vid);
+        }
+        if (SupaDB.ready && SupaDB.logVisit) {
+          SupaDB.logVisit(vid, "/");
+        }
+      } catch (e) {
+        /* visit logging must never break the page */
+      }
     },
 
     // Favorites

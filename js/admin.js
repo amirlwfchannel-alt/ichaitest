@@ -40,6 +40,13 @@ document.addEventListener("alpine:init", () => {
     accountingCustomTo: "",
     _chartInstances: {},
 
+    // Developer account & analytics state
+    DEVELOPER_EMAIL: "amirlwf.dev@gmail.com",
+    isDeveloper: false,
+    visitStats: null,
+    dbUsage: null,
+    devLoading: false,
+
     // Custom Jalali date selector (defaults to today in Tehran)
     ...(() => {
       const parts = new Intl.DateTimeFormat("en-u-ca-persian", {
@@ -114,6 +121,7 @@ document.addEventListener("alpine:init", () => {
         const session = await SupaDB.getSession();
         if (session) {
           this.isAuthenticated = true;
+          await this._checkDeveloper();
           await this.loadData();
           // Start realtime after data loaded
           this.$nextTick(() => initRealtimeSystem(this));
@@ -145,12 +153,28 @@ document.addEventListener("alpine:init", () => {
         );
         if (error) throw error;
         this.isAuthenticated = true;
+        this.isDeveloper =
+          this.loginEmail.trim().toLowerCase() === this.DEVELOPER_EMAIL;
         await this.loadData();
         this.toast("با موفقیت وارد شدید");
       } catch {
         this.loginError = "ایمیل یا رمز عبور اشتباه است";
       }
       this.loginLoading = false;
+    },
+
+    // Restore developer flag on session resume too
+    async _checkDeveloper() {
+      try {
+        const session = await SupaDB.getSession();
+        if (!session || !session.user) return false;
+        const email = (session.user.email || "").toLowerCase();
+        if (email === this.DEVELOPER_EMAIL) {
+          this.isDeveloper = true;
+          return true;
+        }
+      } catch { /* ignore */ }
+      return false;
     },
 
     async logout() {
@@ -708,6 +732,82 @@ document.addEventListener("alpine:init", () => {
       this.sidebarOpen = false;
       await this.loadAccountingData();
       this.$nextTick(() => this.renderCharts());
+    },
+
+    // ══════════════════════════════════════════════════
+    // DEVELOPER PAGE — analytics + db usage (dev account only)
+    // ══════════════════════════════════════════════════
+
+    async openDeveloperPage() {
+      if (!this.isDeveloper) return;
+      this.activePage = "developer";
+      this.sidebarOpen = false;
+      await this.loadDeveloperData();
+    },
+
+    async loadDeveloperData() {
+      this.devLoading = true;
+      try {
+        const [stats, usage] = await Promise.all([
+          SupaDB.fetchVisitStats(),
+          SupaDB.fetchDbUsage(),
+        ]);
+        this.visitStats = stats;
+        this.dbUsage = usage;
+        this.$nextTick(() => this.renderVisitsChart());
+      } finally {
+        this.devLoading = false;
+      }
+    },
+
+    renderVisitsChart() {
+      const canvas = document.getElementById("visitsChart");
+      if (!canvas || !this.visitStats || !window.Chart) return;
+      const key = "visits";
+      if (this._chartInstances[key]) {
+        this._chartInstances[key].destroy();
+      }
+      const labels = this.visitStats.daily.map((d) => d.label);
+      const counts = this.visitStats.daily.map((d) => d.count);
+      const isDark = document.body.classList.contains("dark-mode");
+      this._chartInstances[key] = new Chart(canvas, {
+        type: "bar",
+        data: {
+          labels,
+          datasets: [
+            {
+              label: "بازدید",
+              data: counts,
+              backgroundColor: "rgba(232,197,71,.75)",
+              borderColor: "#e8c547",
+              borderWidth: 1,
+              borderRadius: 6,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { display: false } },
+          scales: {
+            x: {
+              ticks: {
+                color: isDark ? "#cbd5e1" : "#475569",
+                font: { size: 9, family: "Vazirmatn" },
+              },
+              grid: { display: false },
+            },
+            y: {
+              beginAtZero: true,
+              ticks: {
+                precision: 0,
+                color: isDark ? "#cbd5e1" : "#475569",
+              },
+              grid: { color: isDark ? "#334155" : "#e2e8f0" },
+            },
+          },
+        },
+      });
     },
 
     async loadAccountingData() {

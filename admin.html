@@ -25,7 +25,7 @@
   <!-- Alpine.js (local) -->
   <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
-  <link rel="stylesheet" href="css/admin.css?v=20260823c">
+  <link rel="stylesheet" href="css/admin.css?v=20260823d">
 </head>
 
 <body class="admin-body font-fa" x-data="adminPanel" :class="{ 'dark-mode': darkMode }">
@@ -92,8 +92,13 @@
         <span x-show="newOrdersCount > 0" class="nav-badge" x-text="toPersianNum(newOrdersCount)"></span>
       </button>
       <button class="nav-item" :class="{ 'active': activePage === 'accounting' }" @click="openAccountingPage()">
-        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
         حسابداری
+      </button>
+
+      <button x-show="isDeveloper" class="nav-item" :class="{ 'active': activePage === 'developer' }" @click="openDeveloperPage()" style="color:var(--cafe-gold,#e8c547)">
+        <svg xmlns="http://www.w3.org/2000/svg" class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+        دولوپر
       </button>
     </nav>
 
@@ -489,6 +494,87 @@
           <p>سفارشی یافت نشد</p>
         </div>
       </div>
+    </div>
+
+    <!-- ─── DEVELOPER PAGE (dev account only) ─── -->
+    <div x-show="activePage === 'developer'">
+      <div class="admin-topbar">
+        <h1 class="topbar-title">پنل دولوپر</h1>
+        <button class="btn btn-outline btn-sm" @click="loadDeveloperData()" :disabled="devLoading">
+          <span x-show="!devLoading">↻ بروزرسانی</span>
+          <span x-show="devLoading">در حال بارگذاری...</span>
+        </button>
+      </div>
+
+      <div x-show="!visitStats" class="stat-card" style="text-align:center;padding:3rem">
+        <p style="color:var(--admin-muted)">در حال بارگذاری آمار...</p>
+      </div>
+
+      <template x-if="visitStats">
+        <div>
+          <!-- KPI cards -->
+          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+            <div class="stat-card">
+              <div class="stat-icon" style="background:rgba(232,197,71,0.12);color:var(--admin-gold)">👁</div>
+              <div class="stat-number" style="color:var(--admin-gold)" x-text="toPersianNum(visitStats.today)"></div>
+              <div class="stat-label">بازدید امروز</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:rgba(74,144,217,0.1);color:var(--admin-blue)">🌙</div>
+              <div class="stat-number" x-text="toPersianNum(visitStats.yesterday)"></div>
+              <div class="stat-label">دیروز</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:rgba(40,167,69,0.1);color:var(--admin-green)">📅</div>
+              <div class="stat-number" x-text="toPersianNum(visitStats.week)"></div>
+              <div class="stat-label">۷ روز اخیر</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6">∑</div>
+              <div class="stat-number" x-text="visitStats.total != null ? toPersianNum(visitStats.total) : '—'"></div>
+              <div class="stat-label">مجموع کل بازدیدها</div>
+            </div>
+          </div>
+
+          <!-- Chart -->
+          <div class="stat-card" style="margin-bottom:1.25rem">
+            <h3 class="text-lg font-black mb-3">بازدید ۱۴ روز اخیر (تقویم شمسی)</h3>
+            <div style="position:relative;height:260px">
+              <canvas id="visitsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- DB usage -->
+          <template x-if="dbUsage">
+            <div class="stat-card">
+              <h3 class="text-lg font-black mb-3">مصرف دیتابیس</h3>
+              <div class="grid grid-cols-2 gap-4 mb-4">
+                <div class="stat-card">
+                  <div class="stat-number" x-text="toPersianNum(visitStats.uniqueVisitors)"></div>
+                  <div class="stat-label">بازدیدکننده یکتا (۱۴ روز)</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-number" x-text="dbUsage.estKB >= 1024 ? (dbUsage.estKB/1024).toFixed(1) + ' MB' : toPersianNum(dbUsage.estKB) + ' KB'"></div>
+                  <div class="stat-label">حجم تقریبی داده‌ها</div>
+                </div>
+              </div>
+              <div class="data-table-wrapper">
+                <table class="data-table">
+                  <thead><tr><th>جدول</th><th>تعداد رکورد</th></tr></thead>
+                  <tbody>
+                    <template x-for="t in dbUsage.tables" :key="t.table">
+                      <tr>
+                        <td x-text="t.name"></td>
+                        <td x-text="t.rows >= 0 ? toPersianNum(t.rows) : '—'"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </template>
+        </div>
+      </template>
     </div>
 
     <!-- ─── ACCOUNTING PAGE ─── -->
