@@ -211,13 +211,26 @@ document.addEventListener("alpine:init", () => {
     // Search
     get filteredProducts() {
       if (!this.searchQuery.trim()) return this.products;
-      const q = this.searchQuery.trim();
+      const q = this._normFa(this.searchQuery);
       return this.products.filter(
         (p) =>
-          p.name_fa.includes(q) ||
-          p.description_fa.includes(q) ||
-          this.getCategoryName(p.category_id).includes(q)
+          this._normFa(p.name_fa).includes(q) ||
+          this._normFa(p.description_fa).includes(q) ||
+          this._normFa(this.getCategoryName(p.category_id)).includes(q)
       );
+    },
+
+    // Persian normalization: Arabic Yeh/Kaf → Farsi, strip ZWNJ/diacritics
+    _normFa(s) {
+      return (s || "")
+        .toString()
+        .replace(/[يى]/g, "ی")
+        .replace(/[ك]/g, "ک")
+        .replace(/[ۀة]/g, "ه")
+        .replace(/[\u200c\u064b-\u0652\u0640]/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
     },
 
     get filteredFeedbacks() {

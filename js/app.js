@@ -106,6 +106,23 @@ document.addEventListener("alpine:init", () => {
       this.$nextTick(() => this.observeFadeIns());
     },
 
+    // ── Persian text normalization for search ──
+    // Arabic Yeh/Kaf → Farsi, ZWNJ/taachdid/tatweel removed, digits unified,
+    // collapse whitespace, lowercase (for any latin text).
+    _norm(s) {
+      return (s || "")
+        .toString()
+        .replace(/[يى]/g, "ی")
+        .replace(/[كک]/g, "ک")
+        .replace(/[ۀة]/g, "ه")
+        .replace(/[\u200c\u064b-\u0652\u0640]/g, "") // ZWNJ, harakat, tatweel
+        .replace(/[۰-۹]/g, (d) => "۰۱۲۳۴۵۶۷۸۹".indexOf(d))
+        .replace(/[٠-٩]/g, (d) => "٠١٢٣٤٥٦٧٨٩".indexOf(d))
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLowerCase();
+    },
+
     get filteredProducts() {
       let list = this.products;
       if (this.activeCategory !== "cat-1") {
@@ -113,26 +130,43 @@ document.addEventListener("alpine:init", () => {
       }
       const raw = this.searchQuery;
       if (!raw || !raw.trim()) return list;
-      const q = raw.trim().toLowerCase().replace(/\s+/g, " ");
+      const q = this._norm(raw);
       if (!q) return list;
+      const terms = q.split(" ").filter(Boolean);
 
       const scored = [];
       for (let i = 0; i < list.length; i++) {
         const p = list[i];
-        const name = (p.name_fa || "").toLowerCase();
-        const desc = (p.description_fa || "").toLowerCase();
+        const name = this._norm(p.name_fa);
+        const desc = this._norm(p.description_fa);
         let score = 0;
-        if (name.startsWith(q)) score = 3;
-        else if (this._wordMatch(name, q)) score = 2;
-        else if (name.includes(q) || desc.includes(q)) score = 1;
-        if (score > 0) scored.push({ p, score, order: p.order });
+        // every term must match somewhere in name or description
+        const allInName = terms.every((t) => name.includes(t));
+        const allInDesc = terms.every((t) => desc.includes(t));
+        if (!allInName && !allInDesc) continue;
+
+        const first = terms[0];
+        if (name === first || name.startsWith(first)) score = 3;
+        else if (
+          name.split(" ").some((w) => w.startsWith(first)) ||
+          terms.every((t) => name.includes(t))
+        ) {
+          score = 2;
+        } else {
+          score = 1;
+        }
+        scored.push({ p, score, order: p.order });
       }
       scored.sort((a, b) => b.score - a.score || a.order - b.order);
       return scored.map((s) => s.p);
     },
 
     get featuredProducts() {
-      return this.products.filter((p) => p.is_featured);
+      // While searching, the featured section shows matching featured items
+      // only (so it never displays irrelevant "popular" products above results).
+      const base = this.products.filter((p) => p.is_featured);
+      if (!this.searchQuery || !this.searchQuery.trim()) return base;
+      return this.filteredProducts.filter((p) => p.is_featured);
     },
 
     // Feedback

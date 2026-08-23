@@ -105,7 +105,6 @@
                    x-model.debounce.300ms="searchQuery"
                    @focus="activeCategory='cat-1'">
           </div>
-
           <!-- Favorite count badge (clickable) -->
           <button @click="toggleFavPanel()"
                   class="relative cursor-pointer"
@@ -161,7 +160,7 @@
           <svg class="w-4 h-4 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" style="color:var(--cafe-text-muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
-          <input type="text" class="search-input w-full" placeholder="جستجو در منو..." x-model.debounce.300ms="searchQuery">
+          <input type="text" class="search-input w-full" placeholder="جستجو در منو..." x-model.debounce.300ms="searchQuery" @focus="activeCategory='cat-1'">
         </div>
         <div class="flex flex-col gap-1">
           <button @click="scrollTo('menu')" class="py-2 text-sm font-medium text-right" style="color:var(--cafe-text-muted)">منو</button>
