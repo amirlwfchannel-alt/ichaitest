@@ -539,7 +539,7 @@
             <img :src="item.image_url" :alt="item.name_fa" class="fav-panel-item-img" loading="lazy">
             <div class="fav-panel-item-info">
               <div class="fav-panel-item-name" x-text="item.name_fa"></div>
-              <div class="fav-panel-item-price" x-text="$store.cart.formatPrice(item.price)"></div>
+              <div class="fav-panel-item-price" x-text="formatPrice(item.price)"></div>
               <!-- Quantity controls -->
               <div class="flex items-center gap-2 mt-1">
                 <button class="qty-btn" @click="$store.cart.updateQty(item.id, -1)">−</button>
@@ -559,7 +559,7 @@
         <div x-show="$store.cart.items.length > 0" class="cart-order-form">
           <div class="cart-total-row">
             <span class="text-sm font-bold" style="color:var(--cafe-text-muted)">جمع سفارش:</span>
-            <span class="text-lg font-black" style="color:var(--cafe-gold)" x-text="$store.cart.formatPrice($store.cart.total)"></span>
+            <span class="text-lg font-black" style="color:var(--cafe-gold)" x-text="formatPrice($store.cart.total)"></span>
           </div>
           <div class="mb-2">
             <input type="text" class="feedback-input" placeholder="شماره میز (اختیاری)" x-model="$store.cart.tableNumber" maxlength="10">
@@ -589,7 +589,7 @@
               <span class="track-status-badge" :style="'background:' + $store.cart.getStatusColor(order.status)" x-text="$store.cart.getStatusLabel(order.status)"></span>
             </div>
             <div class="text-xs mt-1" style="color:var(--cafe-text-muted)">
-              <span x-text="$store.cart.formatPrice(order.total_price)"></span> · <span x-text="order.item_count + ' آیتم'"></span>
+              <span x-text="formatPrice(order.total_price)"></span> · <span x-text="order.item_count + ' آیتم'"></span>
             </div>
             <div x-show="order.table_number" class="text-xs mt-1" style="color:var(--cafe-text-muted)">
               میز: <span x-text="order.table_number"></span>
@@ -630,7 +630,7 @@
       <p class="text-sm mb-4" style="color:var(--cafe-text-muted)">شماره سفارش شما:</p>
       <div class="text-2xl font-black mb-1" style="color:var(--cafe-text)" x-text="$store.cart.orderSuccess?.order_number"></div>
       <p class="text-sm mb-6" style="color:var(--cafe-text-muted)">
-        مبلغ: <span style="color:var(--cafe-gold);font-weight:800" x-text="$store.cart.formatPrice($store.cart.orderSuccess?.total_price)"></span>
+        مبلغ: <span style="color:var(--cafe-gold);font-weight:800" x-text="formatPrice($store.cart.orderSuccess?.total_price)"></span>
       </p>
       <button class="feedback-submit" @click="$store.cart.closeSuccess()" style="max-width:280px;margin:0 auto">
         پیگیری سفارش
