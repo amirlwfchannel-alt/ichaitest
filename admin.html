@@ -447,17 +447,22 @@
               <template x-for="order in filteredOrders" :key="order.id">
                 <tr :style="order.status === 'new' ? 'background:rgba(232,197,71,0.05)' : ''">
                   <td class="font-bold text-xs whitespace-nowrap" style="color:var(--admin-text)" x-text="order.order_number"></td>
-                  <td class="text-sm" x-text="order.table_number || '—'"></td>
                   <td>
-                    <div class="text-xs" style="color:var(--admin-text)" x-text="order.item_count + ' آیتم'"></div>
+                    <div class="text-sm font-bold" style="color:var(--admin-text)" x-text="order.table_number || '—'"></div>
+                    <div class="text-xs mt-0.5" style="color:var(--admin-text-muted)" x-show="order.customer_name" x-text="order.customer_name"></div>
+                  </td>
+                  <td>
                     <template x-if="order.items && order.items.length > 0">
-                      <div class="text-xs mt-0.5" style="color:var(--admin-text-muted)">
-                        <template x-for="item in order.items.slice(0, 3)" :key="item.id">
-                          <div x-text="item.product_name_fa + ' ×' + item.quantity"></div>
+                      <div class="text-xs space-y-0.5" style="color:var(--admin-text)">
+                        <template x-for="item in order.items" :key="item.id">
+                          <div x-text="'● ' + item.product_name_fa + '  ×' + toPersianNum(item.quantity)"></div>
                         </template>
-                        <div x-show="order.items.length > 3" class="text-xs" style="color:var(--admin-text-muted)" x-text="'و ' + (order.items.length - 3) + ' آیتم دیگر'"></div>
                       </div>
                     </template>
+                    <template x-if="!order.items || order.items.length === 0">
+                      <div class="text-xs" style="color:var(--admin-text-muted)" x-text="toPersianNum(order.item_count) + ' آیتم'"></div>
+                    </template>
+                    <div class="text-xs mt-1" style="color:var(--admin-gold)" x-show="order.notes" x-text="'📝 ' + order.notes"></div>
                   </td>
                   <td class="font-bold text-sm" style="color:var(--admin-gold)" x-text="formatPrice(order.total_price)"></td>
                   <td>

@@ -581,16 +581,16 @@ document.addEventListener("alpine:init", () => {
           (o) =>
             o.order_number.includes(q) ||
             (o.table_number && o.table_number.includes(q)) ||
-            (o.customer_name && o.customer_name.includes(q))
+            (o.customer_name && o.customer_name.includes(q)) ||
+            (o.items || []).some((it) => it.product_name_fa && it.product_name_fa.includes(q))
         );
       }
       return list;
     },
 
     get orderStats() {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const todayOrders = this.orders.filter((o) => new Date(o.created_at) >= today);
+      const dayStart = Utils.startOfTehranDay();
+      const todayOrders = this.orders.filter((o) => new Date(o.created_at) >= dayStart);
       const todayActive = todayOrders.filter((o) => o.status !== "cancelled");
       return {
         todayCount: todayActive.length,

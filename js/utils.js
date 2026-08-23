@@ -80,25 +80,75 @@ const Utils = {
   },
 
   /**
-   * Create a simple Jalali date string (basic approximation).
+   * ── Time helpers: exact Iran (Tehran) time, immune to wrong local clocks ──
+   * Calendar: Jalali (Persian) · Zone: Asia/Tehran (fixed UTC+03:30, no DST)
    */
-  toPersianDate(date) {
+  TZ_IRAN: "Asia/Tehran",
+  _clockOffsetMs: 0,
+
+  /**
+   * Set milliseconds added to local clock so times match the Supabase
+   * server clock. Called automatically by SupaDB.init().
+   */
+  setClockOffset(ms) {
+    this._clockOffsetMs = Number(ms) || 0;
+  },
+
+  /**
+   * Corrected "now" — safe against wrong device clocks.
+   */
+  now() {
+    return new Date(Date.now() + this._clockOffsetMs);
+  },
+
+  /**
+   * Core formatter: Jalali calendar, Iran timezone, Persian digits.
+   */
+  _fmtIran(date, opts) {
     try {
-      return new Intl.DateTimeFormat("fa-IR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-      }).format(date || new Date());
+      const d = typeof date === "string" ? new Date(date) : date;
+      if (!d || isNaN(d)) return "—";
+      return new Intl.DateTimeFormat(
+        "fa-IR-u-ca-persian",
+        Object.assign({ timeZone: this.TZ_IRAN }, opts)
+      ).format(d);
     } catch {
-      return "";
+      return date ? String(date) : "—";
     }
   },
 
   /**
-   * Persian relative time (basic).
+   * Instant of midnight (00:00) in Tehran for a given instant.
+   */
+  startOfTehranDay(date) {
+    let d = date instanceof Date ? date : date ? new Date(date) : this.now();
+    const ymd = new Intl.DateTimeFormat("en-CA", {
+      timeZone: this.TZ_IRAN,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(d);
+    return new Date(ymd + "T00:00:00+03:30");
+  },
+
+  /**
+   * Long-form Jalali date (e.g. «۱ شهریور ۱۴۰۴») in Iran time.
+   */
+  toPersianDate(date) {
+    return this._fmtIran(date || this.now(), {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  },
+
+  /**
+   * Persian relative time, based on the corrected server clock.
    */
   timeAgo(date) {
-    const seconds = Math.floor((new Date() - date) / 1000);
+    const d = typeof date === "string" ? new Date(date) : date;
+    if (!d || isNaN(d)) return "—";
+    const seconds = Math.floor((this.now() - d) / 1000);
     if (seconds < 60) return "لحظاتی پیش";
     if (seconds < 3600) return this.toPersianNum(Math.floor(seconds / 60)) + " دقیقه پیش";
     if (seconds < 86400) return this.toPersianNum(Math.floor(seconds / 3600)) + " ساعت پیش";
@@ -106,86 +156,72 @@ const Utils = {
   },
 
   /**
-   * Format date to Jalali/Persian readable string.
+   * Full Jalali datetime in exact Iran time: «۱۴۰۴/۰۶/۰۱، ۱۸:۳۰».
    */
   formatDate(dateStr) {
     if (!dateStr) return "—";
-    try {
-      const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
-      return new Intl.DateTimeFormat("fa-IR", {
-        year: "numeric",
-        month: "long",
-        day: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(d);
-    } catch {
-      return dateStr;
-    }
+    return this._fmtIran(dateStr, {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   },
 
   /**
-   * Format short date (no time).
+   * Short Jalali date (no time) in Iran time.
    */
   formatDateShort(dateStr) {
     if (!dateStr) return "—";
-    try {
-      const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
-      return new Intl.DateTimeFormat("fa-IR", {
-        year: "numeric",
-        month: "short",
-        day: "numeric",
-      }).format(d);
-    } catch {
-      return dateStr;
-    }
+    return this._fmtIran(dateStr, {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
   },
 
   /**
-   * Format time only (HH:MM).
+   * Time only (HH:MM) in Iran time.
    */
   formatTime(dateStr) {
     if (!dateStr) return "—";
-    try {
-      const d = typeof dateStr === "string" ? new Date(dateStr) : dateStr;
-      return new Intl.DateTimeFormat("fa-IR", {
-        hour: "2-digit",
-        minute: "2-digit",
-      }).format(d);
-    } catch {
-      return dateStr;
-    }
+    return this._fmtIran(dateStr, {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
   },
 
   /**
    * Get start of day/week/month for period filtering.
    */
   getPeriodStart(period, referenceDate) {
-    const now = referenceDate ? new Date(referenceDate) : new Date();
-    const start = new Date(now);
+    const now = referenceDate ? new Date(referenceDate) : this.now();
     switch (period) {
       case "today":
-        start.setHours(0, 0, 0, 0);
-        return start.toISOString();
+        return this.startOfTehranDay(now).toISOString();
       case "yesterday": {
-        start.setDate(start.getDate() - 1);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(start);
-        end.setHours(23, 59, 59, 999);
+        const start = this.startOfTehranDay(now);
+        start.setUTCSeconds(start.getUTCSeconds() - 86400);
+        const end = new Date(start.getTime() + 86400000 - 1);
         return { from: start.toISOString(), to: end.toISOString() };
       }
       case "7days":
-        start.setDate(start.getDate() - 7);
-        start.setHours(0, 0, 0, 0);
+      case "30days": {
+        const days = period === "7days" ? 7 : 30;
+        const start = this.startOfTehranDay(now);
+        start.setUTCSeconds(start.getUTCSeconds() - days * 86400);
         return start.toISOString();
-      case "30days":
-        start.setDate(start.getDate() - 30);
-        start.setHours(0, 0, 0, 0);
-        return start.toISOString();
+      }
       case "month": {
-        start.setDate(1);
-        start.setHours(0, 0, 0, 0);
-        return start.toISOString();
+        const ym = new Intl.DateTimeFormat("en-CA", {
+          timeZone: this.TZ_IRAN,
+          year: "numeric",
+          month: "2-digit",
+        }).format(now);
+        return new Date(ym + "-01T00:00:00+03:30").toISOString();
       }
       case "all":
         return null;

@@ -75,8 +75,12 @@ const RealtimeManager = {
     }
     if (Notification.permission === "granted") {
       try {
+        const itemSummary = (order.items || [])
+          .slice(0, 4)
+          .map((i) => `${i.product_name_fa} ×${i.quantity}`)
+          .join("، ");
         new Notification("🛒 سفارش جدید!", {
-          body: `میز ${order.table_number || "?"} — ${order.item_count} آیتم — ${Utils.formatPrice(order.total_price)}`,
+          body: `میز ${order.table_number || "?"} — ${itemSummary || order.item_count + " آیتم"} — ${Utils.formatPrice(order.total_price)}`,
           icon: "logo/no-background-logo-1.webp",
           tag: "order-" + order.id,
           requireInteraction: true,
@@ -99,10 +103,26 @@ function initRealtimeSystem(vm) {
 
   RealtimeManager.init({
     soundEnabled: vm.soundEnabled,
-    onNewOrder: (order) => {
+    onNewOrder: async (orderRow) => {
+      // Realtime payload carries no items — fetch the full order with items
+      let order = orderRow;
+      try {
+        const full = await SupaDB.fetchOrderWithItemsById(orderRow.id);
+        if (full) order = full;
+      } catch (e) {
+        console.warn("Fetch realtime order items failed:", e);
+      }
+
       vm.orders.unshift(order);
+      vm.ordersLoaded = true;
       vm._newOrdersCount = (vm._newOrdersCount || 0) + 1;
       vm.toast("🛒 سفارش جدید از میز " + (order.table_number || "?"), "success");
+
+      // Jump straight to the orders page so the manager sees it immediately
+      if (vm.activePage !== "orders") {
+        vm.activePage = "orders";
+        vm.sidebarOpen = false;
+      }
       document.title = `(${Utils.toPersianNum(vm._newOrdersCount)}) پنل مدیریت — کافه آی‌چای`;
     },
     onOrderUpdate: (order) => {

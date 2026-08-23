@@ -15,7 +15,29 @@ const SupaDB = {
     }
     this.client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
     this.ready = true;
+    this._syncServerTime();
     return true;
+  },
+
+  /**
+   * Sync with the Supabase server clock (HTTP Date header) so relative
+   * times stay correct even when the local device clock is wrong.
+   */
+  async _syncServerTime() {
+    try {
+      const startedAt = Date.now();
+      const res = await fetch(SUPABASE_URL + "/rest/v1/categories?select=id&limit=1", {
+        headers: { apikey: SUPABASE_ANON_KEY },
+      });
+      const endedAt = Date.now();
+      const serverDate = res.headers.get("date");
+      if (!serverDate) return;
+      const rttHalf = (endedAt - startedAt) / 2;
+      const serverMs = new Date(serverDate).getTime() + rttHalf;
+      Utils.setClockOffset(serverMs - endedAt);
+    } catch (e) {
+      console.warn("Server time sync failed:", e);
+    }
   },
 
   async getSession() {
@@ -442,7 +464,7 @@ const SupaDB = {
     try {
       let query = this.client
         .from("orders")
-        .select("*")
+        .select("*, order_items(*)")
         .order("created_at", { ascending: false });
 
       if (options.status) {
@@ -460,7 +482,11 @@ const SupaDB = {
 
       const { data, error } = await query;
       if (error) throw error;
-      return data || [];
+      return (data || []).map((o) => {
+        o.items = o.order_items || [];
+        delete o.order_items;
+        return o;
+      });
     } catch (e) {
       console.warn("Supabase fetch orders failed:", e);
       return Utils.getStorage("cafe_orders", []);
@@ -494,6 +520,29 @@ const SupaDB = {
     if (!order || order.length === 0) return null;
     const items = await this.fetchOrderItems(order[0].id);
     return { ...order[0], items };
+  },
+
+  /**
+   * Fetch a single order (by UUID) with its items — used by realtime
+   * handlers where the payload row alone lacks order_items.
+   */
+  async fetchOrderWithItemsById(orderId) {
+    if (!this.ready) return null;
+    try {
+      const { data, error } = await this.client
+        .from("orders")
+        .select("*, order_items(*)")
+        .eq("id", orderId)
+        .single();
+      if (error) throw error;
+      if (!data) return null;
+      data.items = data.order_items || [];
+      delete data.order_items;
+      return data;
+    } catch (e) {
+      console.warn("Fetch order with items failed:", e);
+      return null;
+    }
   },
 
   /**
