@@ -404,12 +404,13 @@ const SupaDB = {
 
       // Jalali labels for chart (last 14 days)
       const daily = [];
+      const fmtKey = new Intl.DateTimeFormat("en-CA", {
+        timeZone: "Asia/Tehran",
+        year: "numeric", month: "2-digit", day: "2-digit",
+      });
       for (let i = 13; i >= 0; i--) {
-        const dt = new Date(Date.now() + this._clockOffsetMs - i * 86400000);
-        const key = new Intl.DateTimeFormat("en-CA", {
-          timeZone: "Asia/Tehran",
-          year: "numeric", month: "2-digit", day: "2-digit",
-        }).format(dt);
+        const dt = new Date(Utils.now().getTime() - i * 86400000);
+        const key = fmtKey.format(dt);
         daily.push({
           key,
           label: Utils.formatDateShort(key + "T12:00:00+03:30"),
