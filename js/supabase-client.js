@@ -449,47 +449,47 @@ const SupaDB = {
         return -1;
       }
     };
-    // Storage bucket stats (try both root and menu/ prefix)
+    // Storage bucket stats.
+    // NOTE: storage.list() is blocked by bucket policies for non-admin roles,
+    // so we collect public URLs of product images and HEAD each one to get
+    // its real Content-Length. Works with plain HTTP; no extra privileges.
     const fetchStorage = async () => {
       try {
         const bucket = "cafe-images";
-        const fetchPrefix = async (prefix) => {
-          let files = [];
-          let offset = 0;
-          const limit = 100;
-          while (true) {
-            const { data, error } = await this.client.storage
-              .from(bucket)
-              .list(prefix, { limit, offset, sortBy: { column: "created_at", order: "desc" } });
-            if (error) break;
-            if (!data || data.length === 0) break;
-            // filter out folder placeholders (no metadata.size)
-            for (const f of data) {
-              if (f.metadata && typeof f.metadata.size === "number") files.push(f);
-              else if (f.name && !f.id) {
-                // subfolder — recurse one level
-                const sub = await fetchPrefix(prefix ? prefix + "/" + f.name : f.name);
-                files = files.concat(sub);
-              }
-            }
-            if (data.length < limit) break;
-            offset += limit;
-          }
-          return files;
-        };
-        const files = await fetchPrefix("menu");
-        // also try listing root (in case some files at bucket root)
+        let files = [];
+        // 1) gather image URLs from products
         try {
-          const { data: rootData } = await this.client.storage.from(bucket).list("", { limit: 100 });
-          if (rootData) {
-            for (const f of rootData) {
-              if (f.metadata && typeof f.metadata.size === "number") files.push(f);
+          const { data } = await this.client
+            .from("products")
+            .select("image_url")
+            .not("image_url", "is", null);
+          for (const r of data || []) {
+            if (r.image_url && String(r.image_url).indexOf("/object/public/" + bucket + "/") !== -1) {
+              files.push(String(r.image_url));
             }
           }
         } catch { /* ignore */ }
+        // 2) HEAD each file to get real size (parallel, capped)
         let totalBytes = 0;
-        for (const f of files) totalBytes += f.metadata.size;
-        return { bucket, fileCount: files.length, totalBytes, ok: true };
+        const heads = files.slice(0, 200).map(async (u) => {
+          try {
+            const resp = await fetch(u, { method: "HEAD" });
+            if (resp.ok) {
+              const len = parseInt(resp.headers.get("content-length") || "0", 10);
+              return isNaN(len) ? 0 : len;
+            }
+          } catch { /* ignore */ }
+          return 0;
+        });
+        const sizes = await Promise.all(heads);
+        for (const s of sizes) totalBytes += s;
+        return {
+          bucket,
+          fileCount: files.length,
+          totalBytes,
+          ok: true,
+          method: "public-url-head",
+        };
       } catch {
         return { bucket: "cafe-images", fileCount: -1, totalBytes: 0, ok: false };
       }
