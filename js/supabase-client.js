@@ -368,15 +368,30 @@ const SupaDB = {
   // ══════════════════════════════════════════════════════
 
   /**
-   * Generate a unique order number: ORD-YYYYMMDD-XXXX
+   * Generate a unique order number based on the IRANIAN calendar (Jalali)
+   * and Tehran time, immune to wrong device clocks.
+   * Format: C-<JYYMMDD>-<HHMM><2 random>  e.g. C-050601-1437X2
    */
   _generateOrderNumber() {
-    const now = new Date();
-    const y = now.getFullYear();
-    const m = String(now.getMonth() + 1).padStart(2, "0");
-    const d = String(now.getDate()).padStart(2, "0");
-    const seq = String(Math.floor(Math.random() * 9000) + 1000);
-    return `ORD-${y}${m}${d}-${seq}`;
+    // Use server-corrected clock when available
+    const now = Utils.now();
+    const parts = new Intl.DateTimeFormat("en-u-ca-persian", {
+      timeZone: Utils.TZ_IRAN,
+      year: "2-digit",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(now);
+    const get = (t) => parts.find((p) => p.type === t)?.value || "00";
+    const jy = get("year").padStart(2, "0");
+    const jm = get("month").padStart(2, "0");
+    const jd = get("day").padStart(2, "0");
+    const hh = get("hour").replace(/\D/g, "").padStart(2, "0") || "00";
+    const mi = get("minute").padStart(2, "0");
+    const rnd = String(Math.floor(Math.random() * 90) + 10);
+    return `C-${jy}${jm}${jd}-${hh}${mi}${rnd}`;
   },
 
   /**

@@ -1083,3 +1083,22 @@ body {
   from { transform: scale(.85) translateY(20px); opacity: 0; }
   to { transform: scale(1) translateY(0); opacity: 1; }
 }
+
+/* ═══════════ Cancelled order banner (tracking tab) ═══════════ */
+.track-cancelled-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: .6rem;
+  margin-top: .75rem;
+  padding: .75rem .9rem;
+  border-radius: .75rem;
+  background: rgba(220,53,69,.1);
+  border: 1px solid rgba(220,53,69,.35);
+  color: #dc3545;
+  animation: cancel-shake .5s ease-in-out;
+}
+@keyframes cancel-shake {
+  0%,100% { transform: translateX(0); }
+  25% { transform: translateX(4px); }
+  75% { transform: translateX(-4px); }
+}

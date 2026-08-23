@@ -593,28 +593,38 @@
             <div x-show="order.table_number" class="text-xs mt-1" style="color:var(--cafe-text-muted)">
               میز: <span x-text="order.table_number"></span>
             </div>
-            <!-- Status steps -->
-            <div class="track-steps">
-              <div class="track-step" :class="{'active': ['new','preparing','ready','delivered'].includes(order.status)}">
-                <div class="track-dot"></div>
-                <span>جدید</span>
-              </div>
-              <div class="track-line" :class="{'active': ['preparing','ready','delivered'].includes(order.status)}"></div>
-              <div class="track-step" :class="{'active': ['preparing','ready','delivered'].includes(order.status)}">
-                <div class="track-dot"></div>
-                <span>آماده‌سازی</span>
-              </div>
-              <div class="track-line" :class="{'active': ['ready','delivered'].includes(order.status)}"></div>
-              <div class="track-step" :class="{'active': ['ready','delivered'].includes(order.status)}">
-                <div class="track-dot"></div>
-                <span>آماده</span>
-              </div>
-              <div class="track-line" :class="{'active': order.status==='delivered'}"></div>
-              <div class="track-step" :class="{'active': order.status==='delivered'}">
-                <div class="track-dot"></div>
-                <span>تحویل</span>
+            <!-- Cancelled banner (red) — shown INSTEAD of the step tracker -->
+            <div x-show="order.status==='cancelled'" class="track-cancelled-banner">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              <div>
+                <div class="font-black text-sm">سفارش شما لغو شد</div>
+                <div class="text-xs mt-1">این سفارش توسط کافه لغو شده. در صورت اعتراض با کافه هماهنگ کنید.</div>
               </div>
             </div>
+            <!-- Status steps -->
+            <template x-if="order.status!=='cancelled'">
+              <div class="track-steps">
+                <div class="track-step" :class="{'active': ['new','preparing','ready','delivered'].includes(order.status)}">
+                  <div class="track-dot"></div>
+                  <span>جدید</span>
+                </div>
+                <div class="track-line" :class="{'active': ['preparing','ready','delivered'].includes(order.status)}"></div>
+                <div class="track-step" :class="{'active': ['preparing','ready','delivered'].includes(order.status)}">
+                  <div class="track-dot"></div>
+                  <span>آماده‌سازی</span>
+                </div>
+                <div class="track-line" :class="{'active': ['ready','delivered'].includes(order.status)}"></div>
+                <div class="track-step" :class="{'active': ['ready','delivered'].includes(order.status)}">
+                  <div class="track-dot"></div>
+                  <span>آماده</span>
+                </div>
+                <div class="track-line" :class="{'active': order.status==='delivered'}"></div>
+                <div class="track-step" :class="{'active': order.status==='delivered'}">
+                  <div class="track-dot"></div>
+                  <span>تحویل</span>
+                </div>
+              </div>
+            </template>
           </div>
         </template>
       </div>
