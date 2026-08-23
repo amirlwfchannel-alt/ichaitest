@@ -591,6 +591,15 @@ document.addEventListener("alpine:init", () => {
       return Utils.toPersianNum(n);
     },
 
+    /** Format kilobytes into a readable Persian string (KB/MB). */
+    _fmtSize(kb) {
+      if (kb == null || kb < 0) return "—";
+      if (kb >= 1024) {
+        return Utils.toPersianNum((kb / 1024).toFixed(1)) + " مگابایت";
+      }
+      return Utils.toPersianNum(Math.round(kb)) + " کیلوبایت";
+    },
+
     formatDate(dateStr) {
       if (!dateStr) return "—";
       return Utils.formatDate(dateStr);

@@ -434,8 +434,8 @@ const SupaDB = {
   },
 
   /**
-   * Database usage overview: row counts per table (+ estimated size).
-   * Uses exact counts on small tables; head-count for orders/items.
+   * Database + Storage usage overview (detailed breakdown).
+   * Returns per-table counts + per-table size estimates + bucket stats.
    */
   async fetchDbUsage() {
     if (!this.ready) return null;
@@ -449,7 +449,53 @@ const SupaDB = {
         return -1;
       }
     };
-    const [products, categories, orders, orderItems, feedbacks, visits] =
+    // Storage bucket stats (try both root and menu/ prefix)
+    const fetchStorage = async () => {
+      try {
+        const bucket = "cafe-images";
+        const fetchPrefix = async (prefix) => {
+          let files = [];
+          let offset = 0;
+          const limit = 100;
+          while (true) {
+            const { data, error } = await this.client.storage
+              .from(bucket)
+              .list(prefix, { limit, offset, sortBy: { column: "created_at", order: "desc" } });
+            if (error) break;
+            if (!data || data.length === 0) break;
+            // filter out folder placeholders (no metadata.size)
+            for (const f of data) {
+              if (f.metadata && typeof f.metadata.size === "number") files.push(f);
+              else if (f.name && !f.id) {
+                // subfolder — recurse one level
+                const sub = await fetchPrefix(prefix ? prefix + "/" + f.name : f.name);
+                files = files.concat(sub);
+              }
+            }
+            if (data.length < limit) break;
+            offset += limit;
+          }
+          return files;
+        };
+        const files = await fetchPrefix("menu");
+        // also try listing root (in case some files at bucket root)
+        try {
+          const { data: rootData } = await this.client.storage.from(bucket).list("", { limit: 100 });
+          if (rootData) {
+            for (const f of rootData) {
+              if (f.metadata && typeof f.metadata.size === "number") files.push(f);
+            }
+          }
+        } catch { /* ignore */ }
+        let totalBytes = 0;
+        for (const f of files) totalBytes += f.metadata.size;
+        return { bucket, fileCount: files.length, totalBytes, ok: true };
+      } catch {
+        return { bucket: "cafe-images", fileCount: -1, totalBytes: 0, ok: false };
+      }
+    };
+
+    const [products, categories, orders, orderItems, feedbacks, visits, storage] =
       await Promise.all([
         countOf("products"),
         countOf("categories"),
@@ -457,25 +503,39 @@ const SupaDB = {
         countOf("order_items"),
         countOf("feedbacks"),
         countOf("visit_logs"),
+        fetchStorage(),
       ]);
-    // Rough size estimate: avg row widths (bytes) measured conservatively
-    const estKB =
-      (products * 0.6 +
-        categories * 0.15 +
-        orders * 0.4 +
-        orderItems * 0.35 +
-        feedbacks * 1.2 +
-        visits * 0.15) / 1;
+
+    // Per-table size estimates (KB) — avg row width × count / 1024
+    const AVG_ROW_KB = {
+      products: 0.60,
+      categories: 0.15,
+      orders: 0.40,
+      orderItems: 0.35,
+      feedbacks: 1.20,
+      visits: 0.15,
+    };
+    const tableDefs = [
+      { name: "محصولات", table: "products", rows: products, avgKB: AVG_ROW_KB.products },
+      { name: "دسته‌بندی‌ها", table: "categories", rows: categories, avgKB: AVG_ROW_KB.categories },
+      { name: "سفارش‌ها", table: "orders", rows: orders, avgKB: AVG_ROW_KB.orders },
+      { name: "آیتم سفارش‌ها", table: "order_items", rows: orderItems, avgKB: AVG_ROW_KB.orderItems },
+      { name: "بازخوردها", table: "feedbacks", rows: feedbacks, avgKB: AVG_ROW_KB.feedbacks },
+      { name: "لاگ بازدید", table: "visit_logs", rows: visits, avgKB: AVG_ROW_KB.visits },
+    ];
+    const tables = tableDefs.map((t) => ({
+      ...t,
+      estKB: t.rows >= 0 ? Math.round(t.rows * t.avgKB) : -1,
+    }));
+    const dbEstKB = tables.reduce((s, t) => s + (t.estKB > 0 ? t.estKB : 0), 0);
+    const storageKB = storage.ok ? Math.round(storage.totalBytes / 1024) : 0;
     return {
-      tables: [
-        { name: "محصولات", table: "products", rows: products },
-        { name: "دسته‌بندی‌ها", table: "categories", rows: categories },
-        { name: "سفارش‌ها", table: "orders", rows: orders },
-        { name: "آیتم سفارش‌ها", table: "order_items", rows: orderItems },
-        { name: "بازخوردها", table: "feedbacks", rows: feedbacks },
-        { name: "لاگ بازدید", table: "visit_logs", rows: visits },
-      ],
-      estKB: Math.round(estKB),
+      tables,
+      storage,
+      dbEstKB,
+      storageKB,
+      grandKB: dbEstKB + storageKB,
+      estKB: dbEstKB, // legacy key
     };
   },
 

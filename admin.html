@@ -546,28 +546,48 @@
 
           <!-- DB usage -->
           <template x-if="dbUsage">
-            <div class="stat-card">
-              <h3 class="text-lg font-black mb-3">مصرف دیتابیس</h3>
-              <div class="grid grid-cols-2 gap-4 mb-4">
+            <div class="stat-card" style="margin-bottom:1.25rem">
+              <h3 class="text-lg font-black mb-3">مصرف دیتابیس و استوریج</h3>
+
+              <!-- Storage bucket summary -->
+              <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
                 <div class="stat-card">
-                  <div class="stat-number" x-text="toPersianNum(visitStats.uniqueVisitors)"></div>
-                  <div class="stat-label">بازدیدکننده یکتا (۱۴ روز)</div>
+                  <div class="stat-number" x-text="dbUsage.storage.ok ? toPersianNum(dbUsage.storage.fileCount) : '—'"></div>
+                  <div class="stat-label">🖼 فایل تصویر (باکت cafe-images)</div>
                 </div>
                 <div class="stat-card">
-                  <div class="stat-number" x-text="dbUsage.estKB >= 1024 ? (dbUsage.estKB/1024).toFixed(1) + ' MB' : toPersianNum(dbUsage.estKB) + ' KB'"></div>
-                  <div class="stat-label">حجم تقریبی داده‌ها</div>
+                  <div class="stat-number" x-text="_fmtSize(dbUsage.storageKB)"></div>
+                  <div class="stat-label">حجم تصاویر</div>
+                </div>
+                <div class="stat-card">
+                  <div class="stat-number" x-text="_fmtSize(dbUsage.grandKB)"></div>
+                  <div class="stat-label">مجموع کل (دیتابیس + تصاویر)</div>
                 </div>
               </div>
+
+              <!-- Per-table breakdown -->
               <div class="data-table-wrapper">
                 <table class="data-table">
-                  <thead><tr><th>جدول</th><th>تعداد رکورد</th></tr></thead>
+                  <thead><tr><th>جدول</th><th>تعداد رکورد</th><th>حجم تقریبی</th></tr></thead>
                   <tbody>
                     <template x-for="t in dbUsage.tables" :key="t.table">
                       <tr>
                         <td x-text="t.name"></td>
                         <td x-text="t.rows >= 0 ? toPersianNum(t.rows) : '—'"></td>
+                        <td x-text="t.estKB >= 0 ? _fmtSize(t.estKB) : '—'"></td>
                       </tr>
                     </template>
+                    <!-- storage row -->
+                    <tr style="background:rgba(232,197,71,.06)">
+                      <td class="font-bold">🖼 باکت تصاویر (cafe-images)</td>
+                      <td x-text="dbUsage.storage.ok ? toPersianNum(dbUsage.storage.fileCount) : '—'"></td>
+                      <td class="font-bold" x-text="dbUsage.storage.ok ? _fmtSize(dbUsage.storageKB) : 'دسترسی ندارند'"></td>
+                    </tr>
+                    <tr style="font-weight:900;background:rgba(40,167,69,.07)">
+                      <td>جمع کل</td>
+                      <td></td>
+                      <td x-text="_fmtSize(dbUsage.grandKB)"></td>
+                    </tr>
                   </tbody>
                 </table>
               </div>
@@ -841,9 +861,9 @@
   <script src="js/config.js?v=20260823b"></script>
   <script src="js/utils.js?v=20260823b"></script>
   <script src="js/data.js?v=20260823b"></script>
-  <script src="js/supabase-client.js?v=20260823e"></script>
+  <script src="js/supabase-client.js?v=20260823f"></script>
   <script src="js/realtime.js?v=20260823b"></script>
   <script src="js/accounting.js?v=20260823e"></script>
-  <script src="js/admin.js?v=20260823e"></script>
+  <script src="js/admin.js?v=20260823f"></script>
 </body>
 </html>
