@@ -132,6 +132,29 @@ const Utils = {
   },
 
   /**
+   * First instant (Tehran midnight) of a Jalali year/month/day.
+   * Walks the calendar with Intl so leap years are handled correctly.
+   */
+  jalaliToUtc(jy, jm, jd) {
+    // Estimate: Nowruz (~Farvardin 1) falls around March 20-21 Gregorian.
+    const estimate = Date.UTC(jy + 621, 2, 20);
+    for (let i = -10; i < 400; i++) {
+      const probe = new Date(estimate + i * 86400000 + 43200000); // midday UTC
+      const parts = new Intl.DateTimeFormat("en-u-ca-persian", {
+        timeZone: "Asia/Tehran",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+      }).formatToParts(probe);
+      const get = (t) => Number(parts.find((p) => p.type === t).value);
+      if (get("year") === jy && get("month") === jm && get("day") === jd) {
+        return this.startOfTehranDay(probe);
+      }
+    }
+    return null;
+  },
+
+  /**
    * Long-form Jalali date (e.g. «۱ شهریور ۱۴۰۴») in Iran time.
    */
   toPersianDate(date) {

@@ -40,6 +40,22 @@ document.addEventListener("alpine:init", () => {
     accountingCustomTo: "",
     _chartInstances: {},
 
+    // Custom Jalali date selector (defaults to today in Tehran)
+    ...(() => {
+      const parts = new Intl.DateTimeFormat("en-u-ca-persian", {
+        timeZone: "Asia/Tehran",
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+      }).formatToParts(new Date());
+      const get = (t) => Number(parts.find((p) => p.type === t).value);
+      return {
+        jalaliYear: get("year"),
+        jalaliMonth: get("month"),
+        jalaliDay: get("day"),
+      };
+    })(),
+
     // UI state
     searchQuery: "",
     showProductModal: false,
@@ -704,6 +720,39 @@ document.addEventListener("alpine:init", () => {
       this.accountingPeriod = "custom";
       await this.loadAccountingData();
       this.$nextTick(() => this.renderCharts());
+    },
+
+    /**
+     * Convert selected Jalali day to its exact UTC window and reload data.
+     */
+    async applyCustomJalaliDate() {
+      if (!this.jalaliYear || !this.jalaliMonth || !this.jalaliDay) {
+        this.toast("تاریخ را کامل انتخاب کنید", "error");
+        return;
+      }
+      const from = Utils.jalaliToUtc(this.jalaliYear, this.jalaliMonth, this.jalaliDay);
+      if (!from) {
+        this.toast("تاریخ نامعتبر است", "error");
+        return;
+      }
+      const to = new Date(from.getTime() + 86400000 - 1);
+      this.accountingPeriod = "custom";
+      await AccountingEngine.loadData("custom", from.toISOString(), to.toISOString());
+      this.accountingData = AccountingEngine.items;
+      this.accountingLoaded = true;
+      this.$nextTick(() => this.renderCharts());
+    },
+
+    jalaliYearOptions() {
+      const current = Number(
+        new Intl.DateTimeFormat("en-u-ca-persian", {
+          timeZone: Utils.TZ_IRAN,
+          year: "numeric",
+        }).format(Utils.now())
+      );
+      const years = [];
+      for (let y = current; y >= current - 4; y--) years.push(y);
+      return years;
     },
 
     get accountingKPIs() {

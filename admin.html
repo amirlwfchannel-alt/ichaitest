@@ -508,9 +508,19 @@
         <button class="chip" :class="{'active': accountingPeriod==='30days'}" @click="changeAccountingPeriod('30days')">۳۰ روز اخیر</button>
         <button class="chip" :class="{'active': accountingPeriod==='month'}" @click="changeAccountingPeriod('month')">این ماه</button>
         <button class="chip" :class="{'active': accountingPeriod==='all'}" @click="changeAccountingPeriod('all')">همه</button>
-        <div class="flex gap-2 items-center">
-          <input type="date" x-model="accountingCustomFrom" class="form-input" style="max-width:160px;padding:0.4rem 0.6rem;font-size:0.8rem">
-          <button @click="applyCustomDate()" class="btn btn-outline btn-sm">اعمال</button>
+        <div class="flex gap-1 items-center">
+          <select x-model.number="jalaliDay" class="form-input" style="width:70px;padding:0.4rem 0.3rem;font-size:0.8rem">
+            <template x-for="d in 31" :key="d"><option :value="d" x-text="toPersianNum(d)"></option></template>
+          </select>
+          <select x-model.number="jalaliMonth" class="form-input" style="width:110px;padding:0.4rem 0.3rem;font-size:0.8rem">
+            <template x-for="(m,i) in ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند']" :key="i">
+              <option :value="i+1" x-text="m"></option>
+            </template>
+          </select>
+          <select x-model.number="jalaliYear" class="form-input" style="width:85px;padding:0.4rem 0.3rem;font-size:0.8rem">
+            <template x-for="y in jalaliYearOptions()" :key="y"><option :value="y" x-text="toPersianNum(y)"></option></template>
+          </select>
+          <button @click="applyCustomJalaliDate()" class="btn btn-outline btn-sm">اعمال</button>
         </div>
       </div>
 
