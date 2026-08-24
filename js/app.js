@@ -32,6 +32,8 @@ document.addEventListener("alpine:init", () => {
       this.loadFavorites();
       this.loadDarkMode();
       this.trackVisit();
+      // Start live order tracking if there are existing orders
+      this._initLiveTracking();
       setTimeout(() => {
         this.isLoaded = true;
         this.$nextTick(() => this.observeFadeIns());
@@ -65,6 +67,17 @@ document.addEventListener("alpine:init", () => {
       } catch (e) {
         /* visit logging must never break the page */
       }
+    },
+
+    // Start live order tracking on page load
+    _initLiveTracking() {
+      // Use a small delay so Supabase has time to initialize
+      setTimeout(() => {
+        const cart = Alpine.store('cart');
+        if (cart && cart.myOrders.length > 0) {
+          cart._ensureTracker();
+        }
+      }, 1500);
     },
 
     // Favorites

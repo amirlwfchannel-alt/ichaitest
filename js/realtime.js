@@ -130,6 +130,10 @@ function initRealtimeSystem(vm) {
       if (idx > -1) {
         vm.orders[idx] = Object.assign({}, vm.orders[idx], order);
       }
+      // If accounting page is open, refresh its data
+      if (vm.activePage === 'accounting') {
+        vm.loadAccountingData().then(() => vm.$nextTick(() => vm.renderCharts()));
+      }
     },
   });
 

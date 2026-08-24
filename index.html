@@ -43,7 +43,7 @@
   <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/main.css?v=20260823e">
+  <link rel="stylesheet" href="css/main.css?v=20260824a">
 </head>
 
 <body class="font-cafe" x-data="cafeMenu" x-cloak>
@@ -516,6 +516,10 @@
       <button class="cart-tab" :class="{'active': $store.cart.activeTab==='track'}" @click="$store.cart.activeTab='track'; $store.cart.refreshTracking()">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         پیگیری سفارش
+        <span x-show="$store.cart.myOrders.filter(o => o.status === 'new' || o.status === 'preparing').length > 0"
+              class="inline-flex items-center justify-center w-4 h-4 text-[0.55rem] font-black rounded-full"
+              style="background:#28a745;color:#fff;margin-right:-2px;margin-left:4px"
+              x-text="$store.cart.myOrders.filter(o => o.status === 'new' || o.status === 'preparing').length"></span>
       </button>
     </div>
 
@@ -576,16 +580,26 @@
 
       <!-- ══ TRACKING TAB ══ -->
       <div x-show="$store.cart.activeTab === 'track'">
+        <!-- Live indicator -->
+        <div x-show="$store.cart.myOrders.length > 0 && $store.cart._trackerStarted"
+             class="flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full text-xs font-bold"
+             style="background:rgba(40,167,69,0.08);color:#28a745;border:1px solid rgba(40,167,69,0.2)">
+          <span class="inline-block w-2 h-2 rounded-full animate-pulse" style="background:#28a745"></span>
+          پیگیری لایو فعال
+        </div>
         <div x-show="$store.cart.myOrders.length === 0" class="fav-panel-empty">
           <svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           <h4>سفارشی ثبت نشده</h4>
           <p>پس از ثبت سفارش، وضعیت آن را اینجا ببینید</p>
         </div>
         <template x-for="order in $store.cart.myOrders" :key="order.order_number">
-          <div class="track-order-card">
+          <div class="track-order-card" :class="{'track-card-update': order._justUpdated}">
             <div class="track-order-header">
               <span class="font-bold text-sm" style="color:var(--cafe-text)" x-text="order.order_number"></span>
-              <span class="track-status-badge" :style="'background:' + $store.cart.getStatusColor(order.status)" x-text="$store.cart.getStatusLabel(order.status)"></span>
+              <div class="flex items-center gap-1.5">
+                <span class="track-status-badge" :style="'background:' + $store.cart.getStatusColor(order.status)" x-text="$store.cart.getStatusLabel(order.status)"></span>
+                <span x-show="order.status !== 'delivered' && order.status !== 'cancelled'" class="inline-block w-1.5 h-1.5 rounded-full" style="background:#28a745;animation:livePulse 2s infinite"></span>
+              </div>
             </div>
             <div class="text-xs mt-1" style="color:var(--cafe-text-muted)">
               <span x-text="formatPrice(order.total_price)"></span> · <span x-text="order.item_count + ' آیتم'"></span>
@@ -703,7 +717,7 @@
   <script src="js/utils.js?v=20260823b"></script>
   <script src="js/data.js?v=20260823b"></script>
   <script src="js/supabase-client.js?v=20260823g"></script>
-  <script src="js/cart.js?v=20260823e"></script>
-  <script src="js/app.js?v=20260823e"></script>
+  <script src="js/cart.js?v=20260824a"></script>
+  <script src="js/app.js?v=20260824a"></script>
 </body>
 </html>

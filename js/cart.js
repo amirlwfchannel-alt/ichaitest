@@ -1,7 +1,7 @@
 /**
  * cart.js — Customer Cart Logic
  * Uses Alpine.store for shared cart state across components.
- * Provides: cart CRUD, order submission, order tracking via localStorage.
+ * Provides: cart CRUD, order submission, LIVE order tracking via Supabase Realtime.
  */
 
 // OrderCookie — persisting customer orders in browser
@@ -22,6 +22,7 @@ const OrderCookie = {
     if (orders.find((o) => o.order_number === orderNumber)) return;
     orders.unshift({
       order_number: orderNumber,
+      order_id: orderData.order_id || null,
       status: orderData.status || "new",
       total_price: orderData.total_price,
       item_count: orderData.item_count,
@@ -43,6 +44,117 @@ const OrderCookie = {
   },
 };
 
+// ══════════════════════════════════════════════════════════════
+// Customer Realtime Tracker — listens for order status updates
+// ══════════════════════════════════════════════════════════════
+const CustomerTracker = {
+  channel: null,
+  _pollTimer: null,
+  _onStatusChange: null,
+
+  /**
+   * Start listening for realtime order changes.
+   * @param {Function} onStatusChange - callback(orderNumber, newStatus)
+   */
+  start(onStatusChange) {
+    this._onStatusChange = onStatusChange || (() => {});
+
+    // 1) Supabase Realtime subscription (primary — instant updates)
+    this._subscribeRealtime();
+
+    // 2) Polling fallback (every 15s) — covers cases where Realtime
+    //    is unavailable, blocked, or the tab was backgrounded.
+    this._startPolling();
+  },
+
+  stop() {
+    this._unsubscribeRealtime();
+    this._stopPolling();
+  },
+
+  // ── Realtime ──
+  _subscribeRealtime() {
+    if (!SupaDB.ready || this.channel) return;
+
+    // Listen for ALL order updates — we'll filter by our own order numbers
+    this.channel = SupaDB.client
+      .channel("customer-orders-tracker")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "orders" },
+        (payload) => {
+          const updated = payload.new;
+          if (!updated || !updated.order_number) return;
+
+          // Check if this order is in our tracked list
+          const myOrders = OrderCookie.getOrders();
+          const isMine = myOrders.some(
+            (o) => o.order_number === updated.order_number
+          );
+          if (!isMine) return;
+
+          const oldOrder = myOrders.find(
+            (o) => o.order_number === updated.order_number
+          );
+          const oldStatus = oldOrder ? oldOrder.status : null;
+
+          // Update local storage
+          OrderCookie.updateStatus(updated.order_number, updated.status);
+
+          // Notify the Alpine store
+          if (updated.status !== oldStatus) {
+            this._onStatusChange(updated.order_number, updated.status);
+          }
+        }
+      )
+      .subscribe();
+  },
+
+  _unsubscribeRealtime() {
+    if (this.channel && SupaDB.ready) {
+      SupaDB.client.removeChannel(this.channel);
+      this.channel = null;
+    }
+  },
+
+  // ── Polling fallback ──
+  _startPolling() {
+    this._stopPolling();
+    this._pollTimer = setInterval(async () => {
+      await this._pollStatuses();
+    }, 15000); // every 15 seconds
+  },
+
+  _stopPolling() {
+    if (this._pollTimer) {
+      clearInterval(this._pollTimer);
+      this._pollTimer = null;
+    }
+  },
+
+  async _pollStatuses() {
+    if (!SupaDB.ready) return;
+    const myOrders = OrderCookie.getOrders();
+    if (myOrders.length === 0) return;
+
+    try {
+      const numbers = myOrders.map((o) => o.order_number);
+      const fresh = await SupaDB.fetchOrdersByNumbers(numbers);
+      for (const f of fresh) {
+        const local = myOrders.find(
+          (o) => o.order_number === f.order_number
+        );
+        if (local && local.status !== f.status) {
+          OrderCookie.updateStatus(f.order_number, f.status);
+          this._onStatusChange(f.order_number, f.status);
+        }
+      }
+    } catch (e) {
+      // Silent — polling is a fallback
+    }
+  },
+};
+
 // Alpine store registration
 document.addEventListener("alpine:init", () => {
   Alpine.store("cart", {
@@ -55,6 +167,8 @@ document.addEventListener("alpine:init", () => {
     tableNumber: "",
     notes: "",
     myOrders: OrderCookie.getOrders(),
+    _trackerStarted: false,
+    _statusToastShown: {},
 
     // ── Computed ──
     get count() {
@@ -131,6 +245,7 @@ document.addEventListener("alpine:init", () => {
         };
         const result = await SupaDB.createOrder(orderData);
         OrderCookie.addOrder(result.order_number, {
+          order_id: result.id,
           status: result.status || "new",
           total_price: result.total_price,
           item_count: result.item_count,
@@ -143,6 +258,8 @@ document.addEventListener("alpine:init", () => {
         this.tableNumber = "";
         this.notes = "";
         this.myOrders = OrderCookie.getOrders();
+        // Ensure realtime tracker is running
+        this._ensureTracker();
       } catch (e) {
         console.error("Order submit failed:", e);
         this.orderError = "خطا در ثبت سفارش. دوباره تلاش کنید.";
@@ -150,15 +267,33 @@ document.addEventListener("alpine:init", () => {
       this.isSubmitting = false;
     },
 
-    // ── Tracking ──
-    async refreshTracking() {
-      this.myOrders = OrderCookie.getOrders();
-      await this.syncOrderStatuses();
+    // ── Live Tracking ──
+    _ensureTracker() {
+      if (this._trackerStarted) return;
+      if (!SupaDB.ready) return;
+      this._trackerStarted = true;
+
+      CustomerTracker.start((orderNumber, newStatus) => {
+        // Refresh the orders list from localStorage
+        this.myOrders = OrderCookie.getOrders();
+
+        // Show a subtle status change notification
+        const key = orderNumber + ":" + newStatus;
+        if (!this._statusToastShown[key]) {
+          this._statusToastShown[key] = true;
+          // Vibrate on mobile if supported
+          if (navigator.vibrate) {
+            try { navigator.vibrate(200); } catch(e) {}
+          }
+        }
+      });
     },
 
     /**
      * Pull latest statuses from Supabase for the orders this browser placed.
      * Falls back silently to cached statuses when offline / unconfigured.
+     * NOTE: Removed 20-minute auto-deliver override — status changes are
+     * now driven by the admin panel only.
      */
     async syncOrderStatuses() {
       if (!SupaDB.ready || this.myOrders.length === 0) return;
@@ -169,16 +304,9 @@ document.addEventListener("alpine:init", () => {
         for (const o of this.myOrders) {
           const f = fresh.find((x) => x.order_number === o.order_number);
           if (!f) continue;
-          // Display-only fallback: a "new" order untouched by the admin for
-          // 20+ minutes shows as delivered. Real admin-set statuses always win.
-          const ageMin = (Utils.now() - new Date(o.created_at)) / 60000;
-          let effective = f.status;
-          if (effective === "new" && ageMin >= 20) {
-            effective = "delivered";
-          }
-          if (effective !== o.status) {
-            o.status = effective;
-            OrderCookie.updateStatus(o.order_number, effective);
+          if (f.status !== o.status) {
+            o.status = f.status;
+            OrderCookie.updateStatus(o.order_number, f.status);
             changed = true;
           }
         }
@@ -189,10 +317,18 @@ document.addEventListener("alpine:init", () => {
         console.warn("Tracking sync failed:", e);
       }
     },
+
+    async refreshTracking() {
+      this.myOrders = OrderCookie.getOrders();
+      this._ensureTracker();
+      await this.syncOrderStatuses();
+    },
+
     closeSuccess() {
       this.orderSuccess = null;
       this.activeTab = "track";
       this.myOrders = OrderCookie.getOrders();
+      this._ensureTracker();
       this.syncOrderStatuses();
     },
     getStatusLabel(s) {

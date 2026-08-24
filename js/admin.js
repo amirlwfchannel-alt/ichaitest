@@ -820,12 +820,14 @@ document.addEventListener("alpine:init", () => {
     },
 
     async loadAccountingData() {
+      this.accountingLoaded = false;
       try {
         await AccountingEngine.loadData(this.accountingPeriod, this.accountingCustomFrom, this.accountingCustomTo);
         this.accountingData = AccountingEngine.items;
         this.accountingLoaded = true;
       } catch (e) {
         console.error("Load accounting failed:", e);
+        this.accountingLoaded = false;
         this.toast("خطا در بارگذاری اطلاعات حسابداری", "error");
       }
     },
@@ -908,11 +910,13 @@ document.addEventListener("alpine:init", () => {
 
     renderCharts() {
       if (!this.accountingLoaded) return;
-      // Destroy existing charts
-      Object.values(this._chartInstances).forEach((c) => {
-        if (c && c.destroy) c.destroy();
+      // Destroy only accounting charts (preserve other page charts like visits)
+      ['revenue','status','topProducts','hourly'].forEach(key => {
+        if (this._chartInstances[key]) {
+          this._chartInstances[key].destroy();
+          delete this._chartInstances[key];
+        }
       });
-      this._chartInstances = {};
 
       // Revenue chart
       const revEl = document.getElementById("revenueChart");
@@ -1049,13 +1053,11 @@ document.addEventListener("alpine:init", () => {
     },
 
     exportOrdersCSV() {
-      AccountingEngine.orders = this.orders;
       AccountingEngine.exportOrdersCSV();
       this.toast("فایل CSV سفارشات دانلود شد");
     },
 
     exportProductsCSV() {
-      AccountingEngine.items = this.accountingData;
       AccountingEngine.exportProductsCSV();
       this.toast("فایل CSV محصولات دانلود شد");
     },

@@ -1102,3 +1102,20 @@ body {
   25% { transform: translateX(4px); }
   75% { transform: translateX(-4px); }
 }
+
+/* ═══════════ Live Order Tracking Animations ═══════════ */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+@keyframes track-flash {
+  0% { box-shadow: 0 0 0 0 rgba(40,167,69,0.4); }
+  70% { box-shadow: 0 0 0 8px rgba(40,167,69,0); }
+  100% { box-shadow: 0 0 0 0 rgba(40,167,69,0); }
+}
+
+.track-card-update {
+  animation: track-flash 0.8s ease-out;
+  border-color: rgba(40,167,69,0.4) !important;
+}
