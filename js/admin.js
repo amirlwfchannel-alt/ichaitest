@@ -48,20 +48,10 @@ document.addEventListener("alpine:init", () => {
     devLoading: false,
 
     // Custom Jalali date selector (defaults to today in Tehran)
-    ...(() => {
-      const parts = new Intl.DateTimeFormat("en-u-ca-persian", {
-        timeZone: "Asia/Tehran",
-        year: "numeric",
-        month: "numeric",
-        day: "numeric",
-      }).formatToParts(new Date());
-      const get = (t) => Number(parts.find((p) => p.type === t).value);
-      return {
-        jalaliYear: get("year"),
-        jalaliMonth: get("month"),
-        jalaliDay: get("day"),
-      };
-    })(),
+    jalaliYear: 0,
+    jalaliMonth: 1,
+    jalaliDay: 1,
+    _jalaliDaysCache: null,
 
     // UI state
     searchQuery: "",
@@ -116,6 +106,8 @@ document.addEventListener("alpine:init", () => {
     async init() {
       this.loadTheme();
       this.soundEnabled = Utils.getStorage("admin_sound_enabled", true);
+      // Initialize Jalali date (after clock offset may be set)
+      this._initJalaliDate();
 
       if (SupaDB.init()) {
         const session = await SupaDB.getSession();
@@ -878,10 +870,7 @@ document.addEventListener("alpine:init", () => {
     /** Days in the selected Jalali month (29/30/31, leap-year aware). */
     jalaliDaysInMonth() {
       if (!this.jalaliYear || !this.jalaliMonth) return 31;
-      for (let d = 31; d >= 29; d--) {
-        if (Utils.jalaliToUtc(this.jalaliYear, this.jalaliMonth, d)) return d;
-      }
-      return 30;
+      return this._jalaliMaxDay(this.jalaliYear, this.jalaliMonth);
     },
 
     jalaliYearOptions() {
@@ -894,6 +883,35 @@ document.addEventListener("alpine:init", () => {
       const years = [];
       for (let y = current; y >= current - 4; y--) years.push(y);
       return years;
+    },
+
+    /** Initialize Jalali date from server-corrected clock. */
+    _initJalaliDate() {
+      const parts = new Intl.DateTimeFormat("en-u-ca-persian", {
+        timeZone: Utils.TZ_IRAN,
+        year: "numeric",
+        month: "numeric",
+        day: "numeric",
+      }).formatToParts(Utils.now());
+      const get = (t) => Number(parts.find((p) => p.type === t).value);
+      this.jalaliYear = get("year");
+      this.jalaliMonth = get("month");
+      this.jalaliDay = get("day");
+      this._jalaliDaysCache = null;
+    },
+
+    /** Cached days-in-month. */
+    _jalaliMaxDay(jy, jm) {
+      const cacheKey = jy + "-" + jm;
+      if (this._jalaliDaysCache && this._jalaliDaysCache.key === cacheKey) {
+        return this._jalaliDaysCache.max;
+      }
+      let max = 30;
+      for (let d = 31; d >= 29; d--) {
+        if (Utils.jalaliToUtc(jy, jm, d)) { max = d; break; }
+      }
+      this._jalaliDaysCache = { key: cacheKey, max };
+      return max;
     },
 
     get accountingKPIs() {
@@ -1059,7 +1077,95 @@ document.addEventListener("alpine:init", () => {
 
     exportProductsCSV() {
       AccountingEngine.exportProductsCSV();
-      this.toast("فایل CSV محصولات دانلود شد");
+      this.toast("\u0641\u0627\u06cc\u0644 CSV \u0645\u062d\u0635\u0648\u0644\u0627\u062a \u062f\u0627\u0646\u0644\u0648\u062f \u0634\u062f");
+    },
+
+    // === PDF Export (print-optimized) ===
+    exportAccountingPDF() {
+      const kpis = AccountingEngine.getKPIs();
+      const table = AccountingEngine.getProductTable();
+      const period = this.accountingPeriod;
+      const labels = {today:'\u0627\u0645\u0631\u0648\u0632','7days':'\u06f7 \u0631\u0648\u0632 \u0627\u062e\u06cc\u0631','30days':'\u06f3\u06f0 \u0631\u0648\u0632 \u0627\u062e\u06cc\u0631',month:'\u0627\u06cc\u0646 \u0645\u0627\u0647',all:'\u0647\u0645\u0647',custom:'\u0633\u0641\u0627\u0631\u0634\u0648\u06cc'};
+      const pLabel = labels[period] || period;
+      const nowFa = new Intl.DateTimeFormat('fa-IR-u-ca-persian',{timeZone:'Asia/Tehran',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(Utils.now());
+      let rows = '';
+      for (const p of table) {
+        rows += '<tr><td>'+p.name+'</td><td>'+Utils.toPersianNum(p.qty)+'</td><td class="gold">'+Utils.formatPrice(p.revenue)+'</td><td>'+Utils.formatPrice(p.avgPrice)+'</td><td>'+Utils.toPersianNum(p.share)+'\u066a</td></tr>';
+      }
+      const html = '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8">'+
+        '<style>'+
+        'body{font-family:Vazirmatn,Tahoma,sans-serif;padding:2rem;color:#1c1612}'+
+        'h1{font-size:1.4rem;color:#b8860b;margin-bottom:.3rem}'+
+        'h2{font-size:1.1rem;margin:1.5rem 0 .5rem;color:#3d2e1f;border-bottom:2px solid #b8860b;padding-bottom:.3rem}'+
+        '.meta{color:#7a6b5a;font-size:.8rem;margin-bottom:1.5rem}'+
+        '.kpis{display:flex;gap:1rem;margin-bottom:1.5rem}'+
+        '.kpi{flex:1;text-align:center;padding:.75rem;border:1px solid #e8ddd0;border-radius:8px}'+
+        '.kpi .val{font-size:1.3rem;font-weight:900;color:#b8860b}'+
+        '.kpi .lbl{font-size:.7rem;color:#7a6b5a;margin-top:.2rem}'+
+        'table{width:100%;border-collapse:collapse;font-size:.8rem}'+
+        'th{background:#f0e9df;padding:.5rem;text-align:right;font-weight:700;border-bottom:2px solid #b8860b}'+
+        'td{padding:.4rem .5rem;border-bottom:1px solid #e8ddd0}'+
+        '.gold{color:#b8860b;font-weight:800}'+
+        '@media print{body{padding:1rem}}'+
+        '</style></head><body>'+
+        '<h1>\u06af\u0632\u0627\u0631\u0634 \u062d\u0633\u0627\u0628\u062f\u0627\u0631\u06cc \u2014 \u06a9\u0627\u0641\u0647 \u0622\u06cc\u200c\u0686\u0627\u06cc</h1>'+
+        '<div class="meta">\u0628\u0627\u0632\u0647: '+pLabel+' | \u062a\u0627\u0631\u06cc\u062e: '+nowFa+'</div>'+
+        '<div class="kpis">'+
+        '<div class="kpi"><div class="val">'+Utils.formatPrice(kpis.totalRevenue)+'</div><div class="lbl">\u0645\u062c\u0645\u0648\u0639 \u0641\u0631\u0648\u0634</div></div>'+
+        '<div class="kpi"><div class="val">'+Utils.toPersianNum(kpis.totalOrders)+'</div><div class="lbl">\u062a\u0639\u062f\u0627\u062f \u0633\u0641\u0627\u0631\u0634</div></div>'+
+        '<div class="kpi"><div class="val">'+Utils.formatPrice(kpis.avgOrder)+'</div><div class="lbl">\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646 \u0633\u0641\u0627\u0631\u0634</div></div>'+
+        '<div class="kpi"><div class="val">'+(kpis.topProduct?kpis.topProduct.product_name_fa:'\u2014')+'</div><div class="lbl">\u067e\u0631\u0641\u0631\u0648\u0634\u062a\u0631\u06cc\u0646</div></div>'+
+        '</div>'+
+        '<h2>\u0645\u0635\u0631\u0641 \u0645\u062d\u0635\u0648\u0644\u0627\u062a</h2>'+
+        '<table><thead><tr><th>\u0646\u0627\u0645 \u0645\u062d\u0635\u0648\u0644</th><th>\u062a\u0639\u062f\u0627\u062f</th><th>\u062f\u0631\u0622\u0645\u062f</th><th>\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646</th><th>\u0633\u0647\u0645</th></tr></thead><tbody>'+
+        rows+'</tbody></table>'+
+        '<p style="margin-top:2rem;text-align:center;font-size:.7rem;color:#7a6b5a">\u0637\u0631\u0627\u062d\u06cc \u0634\u062f\u0647 \u062a\u0648\u0636\u0639 amirlwf</p>'+
+        '</body></html>';
+      const w = window.open('', '_blank');
+      w.document.write(html);
+      w.document.close();
+      setTimeout(function(){ w.print(); }, 400);
+      this.toast('PDF \u0622\u0645\u0627\u062f\u0647 \u0686\u0627\u067e / \u0630\u062e\u06cc\u0631\u0647 \u0634\u062f');
+    },
+
+    // === Excel Export (SheetJS) ===
+    exportAccountingExcel() {
+      try {
+        if (!window.XLSX) {
+          this.toast('\u06a9\u062a\u0627\u0628\u062e\u0627\u0646\u0647 Excel \u0628\u0627\u0631\u06af\u0630\u0627\u0631\u06cc \u0646\u0634\u062f\u0647', 'error');
+          return;
+        }
+        const kpis = AccountingEngine.getKPIs();
+        const table = AccountingEngine.getProductTable();
+        const orders = AccountingEngine.orders;
+        const wb = XLSX.utils.book_new();
+        // KPIs sheet
+        const kpiRows = [
+          ['\u06af\u0632\u0627\u0631\u0634 \u062d\u0633\u0627\u0628\u062f\u0627\u0631\u06cc'],
+          ['\u0628\u0627\u0632\u0647', this.accountingPeriod],
+          [],
+          ['\u0645\u062c\u0645\u0648\u0639 \u0641\u0631\u0648\u0634', kpis.totalRevenue],
+          ['\u062a\u0639\u062f\u0627\u062f', kpis.totalOrders],
+          ['\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646', kpis.avgOrder],
+          ['\u067e\u0631\u0641\u0631\u0648\u0634\u062a\u0631\u06cc\u0646', kpis.topProduct ? kpis.topProduct.product_name_fa : ''],
+        ];
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpiRows), '\u062e\u0644\u0627\u0635\u0647');
+        // Products sheet
+        const pData = [['\u0646\u0627\u0645', '\u062a\u0639\u062f\u0627\u062f', '\u062f\u0631\u0622\u0645\u062f', '\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646', '\u0633\u0647\u0645(%)']];
+        for (const p of table) pData.push([p.name, p.qty, p.revenue, p.avgPrice, p.share]);
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pData), '\u0645\u062d\u0635\u0648\u0644\u0627\u062a');
+        // Orders sheet
+        if (orders.length > 0) {
+          const oData = [['\u0634\u0645\u0627\u0631\u0647', '\u0648\u0636\u0639\u06cc\u062a', '\u0645\u0628\u0644\u063a', '\u062a\u0639\u062f\u0627\u062f', '\u0645\u06cc\u0632', '\u062a\u0627\u0631\u06cc\u062e']];
+          for (const o of orders) oData.push([o.order_number, Utils.getStatusLabel(o.status), o.total_price, o.item_count, o.table_number||'', Utils.formatDate(o.created_at)]);
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(oData), '\u0633\u0641\u0627\u0631\u0634\u0627\u062a');
+        }
+        XLSX.writeFile(wb, 'ichai-accounting-'+Date.now()+'.xlsx');
+        this.toast('\u0641\u0627\u06cc\u0644 Excel \u062f\u0627\u0646\u0644\u0648\u062f \u0634\u062f');
+      } catch(e) {
+        console.error('Excel export failed:', e);
+        this.toast('\u062e\u0637\u0627 \u062f\u0631 \u062e\u0631\u0648\u062c\u06cc Excel', 'error');
+      }
     },
   }));
 });

@@ -602,8 +602,9 @@
       <div class="admin-topbar">
         <h1 class="topbar-title">حسابداری</h1>
         <div class="flex gap-2">
-          <button @click="exportOrdersCSV()" class="btn btn-outline btn-sm">خروجی سفارشات CSV</button>
-          <button @click="exportProductsCSV()" class="btn btn-outline btn-sm">خروجی محصولات CSV</button>
+          <button @click="exportAccountingPDF()" class="btn btn-outline btn-sm" style="color:#dc3545;border-color:rgba(220,53,69,.3)"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>PDF</button>
+          <button @click="exportAccountingExcel()" class="btn btn-outline btn-sm" style="color:#28a745;border-color:rgba(40,167,69,.3)"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Excel</button>
+          <button @click="exportOrdersCSV()" class="btn btn-outline btn-sm">خروجی CSV</button>
         </div>
       </div>
 
@@ -864,6 +865,7 @@
   <script src="js/supabase-client.js?v=20260823g"></script>
   <script src="js/realtime.js?v=20260823b"></script>
   <script src="js/accounting.js?v=20260823e"></script>
-  <script src="js/admin.js?v=20260824a"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script src="js/admin.js?v=20260824b"></script>
 </body>
 </html>
