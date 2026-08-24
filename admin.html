@@ -25,7 +25,8 @@
   <!-- Alpine.js (local) -->
   <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
-  <link rel="stylesheet" href="css/admin.css?v=20260823e">
+  <link rel="stylesheet" href="css/admin.css?v=20260824b">
+  <link rel="stylesheet" href="css/smoothness.css?v=20260824a">
 </head>
 
 <body class="admin-body font-fa" x-data="adminPanel" :class="{ 'dark-mode': darkMode }">
@@ -618,16 +619,16 @@
       </div>
       <div class="stat-card flex flex-wrap gap-2 items-center mb-6" style="padding:.75rem 1rem">
         <span class="text-xs font-bold" style="color:var(--admin-muted)">📅 برو به روز خاص:</span>
-        <select x-model.number="jalaliDay" class="form-input" style="width:64px;padding:0.4rem 0.3rem;font-size:0.8rem">
-          <template x-for="d in jalaliDaysInMonth()" :key="d"><option :value="d" x-text="toPersianNum(d)"></option></template>
+        <select :value="jalaliDay" @change="jalaliDay = Number($event.target.value)" class="form-input" style="width:64px;padding:0.4rem 0.3rem;font-size:0.8rem">
+          <template x-for="d in jalaliDays" :key="d"><option :value="d" :selected="d === jalaliDay" x-text="toPersianNum(d)"></option></template>
         </select>
-        <select x-model.number="jalaliMonth" class="form-input" style="width:104px;padding:0.4rem 0.3rem;font-size:0.8rem" @change="$nextTick(() => { const max=jalaliDaysInMonth(); if(jalaliDay > max) jalaliDay = max; })">
+        <select :value="jalaliMonth" @change="setJalaliMonth($event.target.value)" class="form-input" style="width:104px;padding:0.4rem 0.3rem;font-size:0.8rem">
           <template x-for="(m,i) in ['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند']" :key="i">
-            <option :value="i+1" x-text="m"></option>
+            <option :value="i+1" :selected="(i+1) === jalaliMonth" x-text="m"></option>
           </template>
         </select>
-        <select x-model.number="jalaliYear" class="form-input" style="width:80px;padding:0.4rem 0.3rem;font-size:0.8rem" @change="$nextTick(() => { const max=jalaliDaysInMonth(); if(jalaliDay > max) jalaliDay = max; })">
-          <template x-for="y in jalaliYearOptions()" :key="y"><option :value="y" x-text="toPersianNum(y)"></option></template>
+        <select :value="jalaliYear" @change="setJalaliYear($event.target.value)" class="form-input" style="width:80px;padding:0.4rem 0.3rem;font-size:0.8rem">
+          <template x-for="y in jalaliYearOpts" :key="y"><option :value="y" :selected="y === jalaliYear" x-text="toPersianNum(y)"></option></template>
         </select>
         <button @click="applyCustomJalaliDate()" class="btn btn-outline btn-sm">اعمال</button>
       </div>

@@ -51,6 +51,8 @@ document.addEventListener("alpine:init", () => {
     jalaliYear: 0,
     jalaliMonth: 1,
     jalaliDay: 1,
+    jalaliDays: 31,
+    jalaliYearOpts: [],
     _jalaliDaysCache: null,
 
     // UI state
@@ -867,22 +869,33 @@ document.addEventListener("alpine:init", () => {
       this.$nextTick(() => this.renderCharts());
     },
 
-    /** Days in the selected Jalali month (29/30/31, leap-year aware). */
-    jalaliDaysInMonth() {
-      if (!this.jalaliYear || !this.jalaliMonth) return 31;
-      return this._jalaliMaxDay(this.jalaliYear, this.jalaliMonth);
+    /** Recalculate jalaliDays when year/month changes. */
+    jalaliUpdateDays() {
+      if (!this.jalaliYear || !this.jalaliMonth) { this.jalaliDays = 31; return; }
+      const key = this.jalaliYear + "-" + this.jalaliMonth;
+      if (this._jalaliDaysCache && this._jalaliDaysCache.key === key) {
+        this.jalaliDays = this._jalaliDaysCache.max;
+      } else {
+        let max = 30;
+        for (let d = 31; d >= 29; d--) {
+          if (Utils.jalaliToUtc(this.jalaliYear, this.jalaliMonth, d)) { max = d; break; }
+        }
+        this._jalaliDaysCache = { key, max };
+        this.jalaliDays = max;
+      }
+      if (this.jalaliDay > this.jalaliDays) this.jalaliDay = this.jalaliDays;
     },
 
-    jalaliYearOptions() {
-      const current = Number(
-        new Intl.DateTimeFormat("en-u-ca-persian", {
-          timeZone: Utils.TZ_IRAN,
-          year: "numeric",
-        }).format(Utils.now())
-      );
-      const years = [];
-      for (let y = current; y >= current - 4; y--) years.push(y);
-      return years;
+    /** Set year and auto-update days. */
+    setJalaliYear(val) {
+      this.jalaliYear = Number(val);
+      this.jalaliUpdateDays();
+    },
+
+    /** Set month and auto-update days. */
+    setJalaliMonth(val) {
+      this.jalaliMonth = Number(val);
+      this.jalaliUpdateDays();
     },
 
     /** Initialize Jalali date from server-corrected clock. */
@@ -898,20 +911,12 @@ document.addEventListener("alpine:init", () => {
       this.jalaliMonth = get("month");
       this.jalaliDay = get("day");
       this._jalaliDaysCache = null;
-    },
-
-    /** Cached days-in-month. */
-    _jalaliMaxDay(jy, jm) {
-      const cacheKey = jy + "-" + jm;
-      if (this._jalaliDaysCache && this._jalaliDaysCache.key === cacheKey) {
-        return this._jalaliDaysCache.max;
-      }
-      let max = 30;
-      for (let d = 31; d >= 29; d--) {
-        if (Utils.jalaliToUtc(jy, jm, d)) { max = d; break; }
-      }
-      this._jalaliDaysCache = { key: cacheKey, max };
-      return max;
+      // Pre-compute year options
+      const years = [];
+      for (let y = this.jalaliYear; y >= this.jalaliYear - 4; y--) years.push(y);
+      this.jalaliYearOpts = years;
+      // Set initial days
+      this.jalaliUpdateDays();
     },
 
     get accountingKPIs() {
