@@ -19,21 +19,27 @@ const AccountingEngine = {
     this.customTo = customTo || "";
 
     let since = null;
+    let until = null;
     if (this.period === "custom" && this.customFrom) {
       since = this.customFrom;
+      until = this.customTo || null;
+    } else if (this.period === "today") {
+      // BUGFIX: "today" previously had no upper bound, so orders placed
+      // after Tehran midnight tomorrow-offset (and any clock skew) leaked in.
+      // Pin the exact Tehran-day window: [00:00, 23:59:59.999].
+      const start = Utils.startOfTehranDay(Utils.now());
+      since = start.toISOString();
+      until = new Date(start.getTime() + 86400000 - 1).toISOString();
     } else if (this.period !== "all") {
       since = Utils.getPeriodStart(this.period);
     }
 
     // Fetch orders
-    const options = { since };
-    // Respect the upper bound too — "go to a specific day" must show ONLY that day.
-    if (this.period === "custom" && this.customFrom && this.customTo) {
-      options.until = this.customTo;
-    }
+    const options = { since, until };
     this.orders = await SupaDB.fetchOrders(options);
-    // Fetch items (same window)
-    this.items = await SupaDB.fetchAccountingData(since, this.period === "custom" ? this.customTo : null);
+    // Fetch items (same window) — must match the orders window exactly,
+    // otherwise KPI totals and the product table disagree.
+    this.items = await SupaDB.fetchAccountingData(since, until);
 
     return this;
   },
@@ -56,6 +62,12 @@ const AccountingEngine = {
       productMap[key].revenue += item.subtotal;
     }
     const topProduct = Object.values(productMap).sort((a, b) => b.qty - a.qty)[0] || null;
+    if (topProduct) {
+      // BUGFIX: expose product_name_fa — the accounting page, PDF and Excel
+      // exports all read topProduct.product_name_fa, which was undefined
+      // before (the field here was `name`), so "پرفروش‌ترین" showed «—».
+      topProduct.product_name_fa = topProduct.name;
+    }
 
     return {
       totalRevenue,

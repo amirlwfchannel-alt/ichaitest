@@ -25,7 +25,7 @@
   <!-- Alpine.js (local) -->
   <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
-  <link rel="stylesheet" href="css/admin.css?v=20260824b">
+  <link rel="stylesheet" href="css/admin.css?v=20260831a">
   <link rel="stylesheet" href="css/smoothness.css?v=20260824a">
 </head>
 
@@ -52,6 +52,7 @@
         <span x-show="loginLoading">در حال ورود...</span>
       </button>
       <p x-show="loginError" class="text-sm mt-3 text-center" style="color:var(--admin-red)" x-text="loginError"></p>
+      <p class="login-footer">طراحی و توسعه توسط <a href="https://amirlwf.ir" target="_blank" rel="noopener">amirlwf</a></p>
     </div>
   </div>
 
@@ -602,10 +603,10 @@
     <div x-show="activePage === 'accounting'">
       <div class="admin-topbar">
         <h1 class="topbar-title">حسابداری</h1>
-        <div class="flex gap-2">
+        <div class="topbar-actions">
           <button @click="exportAccountingPDF()" class="btn btn-outline btn-sm" style="color:#dc3545;border-color:rgba(220,53,69,.3)"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>PDF</button>
           <button @click="exportAccountingExcel()" class="btn btn-outline btn-sm" style="color:#28a745;border-color:rgba(40,167,69,.3)"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17v-6m4 6V7m4 10v-3M5 21h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>Excel</button>
-          <button @click="exportOrdersCSV()" class="btn btn-outline btn-sm">خروجی CSV</button>
+          <button @click="exportOrdersCSV()" class="btn btn-outline btn-sm"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>خروجی CSV</button>
         </div>
       </div>
 
@@ -638,7 +639,7 @@
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(184,134,11,0.1);color:var(--admin-gold)">💰</div>
           <div class="stat-number" x-text="formatPrice(accountingKPIs.totalRevenue)">۰</div>
-          <div class="stat-label">مجموع فروش</div>
+          <div class="stat-label">مجموع فروش (تومان)</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(74,144,217,0.1);color:var(--admin-blue)">📦</div>
@@ -648,11 +649,11 @@
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(40,167,69,0.1);color:var(--admin-green)">📊</div>
           <div class="stat-number" x-text="formatPrice(accountingKPIs.avgOrder)">۰</div>
-          <div class="stat-label">میانگین سفارش</div>
+          <div class="stat-label">میانگین هر سفارش (تومان)</div>
         </div>
         <div class="stat-card">
           <div class="stat-icon" style="background:rgba(139,92,246,0.1);color:#8b5cf6">🏆</div>
-          <div class="stat-number text-base" x-text="accountingKPIs.topProduct?.product_name_fa || '—'">—</div>
+          <div class="stat-number" style="font-size:1rem;font-weight:700;line-height:1.5" x-text="accountingKPIs.topProduct?.product_name_fa || '—'">—</div>
           <div class="stat-label">پرفروش‌ترین</div>
         </div>
       </div>
@@ -865,8 +866,8 @@
   <script src="js/data.js?v=20260823b"></script>
   <script src="js/supabase-client.js?v=20260823g"></script>
   <script src="js/realtime.js?v=20260831a"></script>
-  <script src="js/accounting.js?v=20260823e"></script>
+  <script src="js/accounting.js?v=20260831a"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="js/admin.js?v=20260831a"></script>
+  <script src="js/admin.js?v=20260831b"></script>
 </body>
 </html>

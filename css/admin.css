@@ -572,3 +572,24 @@ body.admin-body {
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--admin-border); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--admin-gold); }
+
+/* ── Top bar action buttons (accounting exports etc.) ── */
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+/* ── Login screen footer credit ── */
+.login-footer {
+  margin-top: 1.25rem;
+  text-align: center;
+  font-size: 0.72rem;
+  color: var(--admin-text-muted);
+}
+.login-footer a {
+  color: var(--admin-gold);
+  text-decoration: none;
+  font-weight: 800;
+}

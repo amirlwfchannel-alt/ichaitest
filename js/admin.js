@@ -1098,59 +1098,132 @@ document.addEventListener("alpine:init", () => {
       this.toast("\u0641\u0627\u06cc\u0644 CSV \u0645\u062d\u0635\u0648\u0644\u0627\u062a \u062f\u0627\u0646\u0644\u0648\u062f \u0634\u062f");
     },
 
-    // === PDF Export (print-optimized) ===
-    exportAccountingPDF() {
-      const kpis = AccountingEngine.getKPIs();
-      const table = AccountingEngine.getProductTable();
-      const period = this.accountingPeriod;
-      const labels = {today:'\u0627\u0645\u0631\u0648\u0632','7days':'\u06f7 \u0631\u0648\u0632 \u0627\u062e\u06cc\u0631','30days':'\u06f3\u06f0 \u0631\u0648\u0632 \u0627\u062e\u06cc\u0631',month:'\u0627\u06cc\u0646 \u0645\u0627\u0647',all:'\u0647\u0645\u0647',custom:'\u0633\u0641\u0627\u0631\u0634\u0648\u06cc'};
-      const pLabel = labels[period] || period;
-      const nowFa = new Intl.DateTimeFormat('fa-IR-u-ca-persian',{timeZone:'Asia/Tehran',year:'numeric',month:'long',day:'numeric',hour:'2-digit',minute:'2-digit',hour12:false}).format(Utils.now());
-      let rows = '';
-      for (const p of table) {
-        rows += '<tr><td>'+p.name+'</td><td>'+Utils.toPersianNum(p.qty)+'</td><td class="gold">'+Utils.formatPrice(p.revenue)+'</td><td>'+Utils.formatPrice(p.avgPrice)+'</td><td>'+Utils.toPersianNum(p.share)+'\u066a</td></tr>';
+    // === PDF Export (print-optimized, popup-blocker safe) ===
+    _accountingPeriodLabel() {
+      const labels = {
+        today: "امروز",
+        "7days": "۷ روز اخیر",
+        "30days": "۳۰ روز اخیر",
+        month: "این ماه",
+        all: "همه زمان‌ها",
+        custom: "بازه دلخواه",
+      };
+      if (this.accountingPeriod === "custom") {
+        const f = this.accountingCustomFrom ? Utils.toPersianDate(this.accountingCustomFrom) : "";
+        const t = this.accountingCustomTo ? Utils.toPersianDate(this.accountingCustomTo) : "";
+        if (f && t) return f + " تا " + t;
+        if (f) return "از " + f;
       }
-      const html = '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8">'+
-        '<style>'+
-        'body{font-family:Vazirmatn,Tahoma,sans-serif;padding:2rem;color:#1c1612}'+
-        'h1{font-size:1.4rem;color:#b8860b;margin-bottom:.3rem}'+
-        'h2{font-size:1.1rem;margin:1.5rem 0 .5rem;color:#3d2e1f;border-bottom:2px solid #b8860b;padding-bottom:.3rem}'+
-        '.meta{color:#7a6b5a;font-size:.8rem;margin-bottom:1.5rem}'+
-        '.kpis{display:flex;gap:1rem;margin-bottom:1.5rem}'+
-        '.kpi{flex:1;text-align:center;padding:.75rem;border:1px solid #e8ddd0;border-radius:8px}'+
-        '.kpi .val{font-size:1.3rem;font-weight:900;color:#b8860b}'+
-        '.kpi .lbl{font-size:.7rem;color:#7a6b5a;margin-top:.2rem}'+
-        'table{width:100%;border-collapse:collapse;font-size:.8rem}'+
-        'th{background:#f0e9df;padding:.5rem;text-align:right;font-weight:700;border-bottom:2px solid #b8860b}'+
-        'td{padding:.4rem .5rem;border-bottom:1px solid #e8ddd0}'+
-        '.gold{color:#b8860b;font-weight:800}'+
-        '@media print{body{padding:1rem}}'+
-        '</style></head><body>'+
-        '<h1>\u06af\u0632\u0627\u0631\u0634 \u062d\u0633\u0627\u0628\u062f\u0627\u0631\u06cc \u2014 \u06a9\u0627\u0641\u0647 \u0622\u06cc\u200c\u0686\u0627\u06cc</h1>'+
-        '<div class="meta">\u0628\u0627\u0632\u0647: '+pLabel+' | \u062a\u0627\u0631\u06cc\u062e: '+nowFa+'</div>'+
-        '<div class="kpis">'+
-        '<div class="kpi"><div class="val">'+Utils.formatPrice(kpis.totalRevenue)+'</div><div class="lbl">\u0645\u062c\u0645\u0648\u0639 \u0641\u0631\u0648\u0634</div></div>'+
-        '<div class="kpi"><div class="val">'+Utils.toPersianNum(kpis.totalOrders)+'</div><div class="lbl">\u062a\u0639\u062f\u0627\u062f \u0633\u0641\u0627\u0631\u0634</div></div>'+
-        '<div class="kpi"><div class="val">'+Utils.formatPrice(kpis.avgOrder)+'</div><div class="lbl">\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646 \u0633\u0641\u0627\u0631\u0634</div></div>'+
-        '<div class="kpi"><div class="val">'+(kpis.topProduct?kpis.topProduct.product_name_fa:'\u2014')+'</div><div class="lbl">\u067e\u0631\u0641\u0631\u0648\u0634\u062a\u0631\u06cc\u0646</div></div>'+
-        '</div>'+
-        '<h2>\u0645\u0635\u0631\u0641 \u0645\u062d\u0635\u0648\u0644\u0627\u062a</h2>'+
-        '<table><thead><tr><th>\u0646\u0627\u0645 \u0645\u062d\u0635\u0648\u0644</th><th>\u062a\u0639\u062f\u0627\u062f</th><th>\u062f\u0631\u0622\u0645\u062f</th><th>\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646</th><th>\u0633\u0647\u0645</th></tr></thead><tbody>'+
-        rows+'</tbody></table>'+
-        '<p style="margin-top:2rem;text-align:center;font-size:.7rem;color:#7a6b5a">\u0637\u0631\u0627\u062d\u06cc \u0634\u062f\u0647 \u062a\u0648\u0636\u0639 amirlwf</p>'+
-        '</body></html>';
-      const w = window.open('', '_blank');
-      w.document.write(html);
-      w.document.close();
-      setTimeout(function(){ w.print(); }, 400);
-      this.toast('PDF \u0622\u0645\u0627\u062f\u0647 \u0686\u0627\u067e / \u0630\u062e\u06cc\u0631\u0647 \u0634\u062f');
+      return labels[this.accountingPeriod] || this.accountingPeriod;
+    },
+
+    exportAccountingPDF() {
+      try {
+        const kpis = AccountingEngine.getKPIs();
+        const table = AccountingEngine.getProductTable();
+        const periodLabel = this._accountingPeriodLabel();
+        const nowFa = new Intl.DateTimeFormat("fa-IR-u-ca-persian", {
+          timeZone: Utils.TZ_IRAN,
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: false,
+        }).format(Utils.now());
+
+        let rows = "";
+        for (const p of table) {
+          rows +=
+            "<tr><td>" + p.name +
+            "</td><td>" + Utils.toPersianNum(p.qty) +
+            '</td><td class="gold">' + Utils.formatPrice(p.revenue) +
+            "</td><td>" + Utils.formatPrice(p.avgPrice) +
+            "</td><td>" + Utils.toPersianNum(p.share) + "٪</td></tr>";
+        }
+        if (!table.length) {
+          rows = '<tr><td colspan="5" style="text-align:center;color:#7a6b5a;padding:1.25rem">داده‌ای برای این بازه ثبت نشده است</td></tr>';
+        }
+
+        const html =
+          '<!DOCTYPE html><html lang="fa" dir="rtl"><head><meta charset="UTF-8">' +
+          "<title>گزارش حسابداری — کافه آی‌چای</title>" +
+          // فونت واقعی سایت (Vazirmatn) به‌جای فونت پیش‌فرض مرورگر
+          '<link rel="stylesheet" href="fonts/fonts.css">' +
+          "<style>" +
+          "@page{size:A4;margin:14mm}" +
+          "body{font-family:Vazirmatn,Tahoma,sans-serif;color:#1c1612;font-size:12px;line-height:1.8}" +
+          ".head{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #b8860b;padding-bottom:.6rem;margin-bottom:1.1rem}" +
+          "h1{font-size:1.3rem;color:#b8860b;margin:0}" +
+          ".brand{font-size:.72rem;color:#7a6b5a;margin-top:.2rem}" +
+          ".meta{text-align:left;font-size:.78rem;color:#7a6b5a;line-height:1.9}" +
+          ".meta b{color:#3d2e1f}" +
+          ".kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin:0 0 1.2rem}" +
+          ".kpi{border:1px solid #e8ddd0;border-radius:10px;padding:.7rem .4rem;text-align:center}" +
+          ".kpi .val{font-size:.98rem;font-weight:800;color:#b8860b}" +
+          ".kpi .lbl{font-size:.68rem;color:#7a6b5a;margin-top:.2rem}" +
+          "h2{font-size:1rem;margin:1.1rem 0 .5rem;color:#3d2e1f;border-bottom:2px solid #b8860b;display:inline-block;padding-bottom:.2rem}" +
+          "table{width:100%;border-collapse:collapse;font-size:.82rem}" +
+          "th{background:#f0e9df;padding:.55rem .5rem;text-align:right;font-weight:800;color:#3d2e1f;border-bottom:2px solid #b8860b}" +
+          "td{padding:.5rem;border-bottom:1px solid #e8ddd0}" +
+          "tr{page-break-inside:avoid}" +
+          ".gold{color:#b8860b;font-weight:700}" +
+          ".foot{margin-top:1.6rem;padding-top:.6rem;border-top:1px solid #e8ddd0;text-align:center;font-size:.72rem;color:#7a6b5a}" +
+          ".foot a{color:#b8860b;text-decoration:none;font-weight:800}" +
+          "</style></head><body>" +
+          '<div class="head"><div><h1>☕ گزارش حسابداری — کافه آی‌چای</h1><div class="brand">منوی دیجیتال کافه</div></div>' +
+          '<div class="meta"><div><b>بازه:</b> ' + periodLabel + "</div><div><b>تاریخ گزارش:</b> " + nowFa + "</div></div></div>" +
+          '<div class="kpis">' +
+          '<div class="kpi"><div class="val">' + Utils.formatPrice(kpis.totalRevenue) + '</div><div class="lbl">مجموع فروش</div></div>' +
+          '<div class="kpi"><div class="val">' + Utils.toPersianNum(kpis.totalOrders) + '</div><div class="lbl">تعداد سفارش</div></div>' +
+          '<div class="kpi"><div class="val">' + Utils.formatPrice(kpis.avgOrder) + '</div><div class="lbl">میانگین هر سفارش</div></div>' +
+          '<div class="kpi"><div class="val">' + (kpis.topProduct ? kpis.topProduct.product_name_fa : "—") + '</div><div class="lbl">پرفروش‌ترین</div></div>' +
+          "</div>" +
+          "<h2>مصرف محصولات</h2>" +
+          '<table><thead><tr><th>نام محصول</th><th>تعداد</th><th>درآمد</th><th>میانگین قیمت</th><th>سهم از فروش</th></tr></thead><tbody>' +
+          rows +
+          "</tbody></table>" +
+          '<div class="foot">طراحی و توسعه توسط <a href="https://amirlwf.ir">amirlwf</a> — amirlwf.ir</div>' +
+          "</body></html>";
+
+        // پرینت از طریق iframe مخفی — مثل قبل پنجره باز نمی‌شود و پاپ‌آپ‌بلاکر هم مزاحم نیست
+        const iframe = document.createElement("iframe");
+        iframe.style.cssText = "position:fixed;right:0;bottom:0;width:0;height:0;border:0;";
+        document.body.appendChild(iframe);
+        const win = iframe.contentWindow;
+        const doc = win.document;
+        doc.open();
+        doc.write(html);
+        doc.close();
+        let printed = false;
+        const doPrint = () => {
+          if (printed) return;
+          printed = true;
+          try {
+            win.focus();
+            win.print();
+          } catch (e) { /* ignore */ }
+          setTimeout(() => iframe.remove(), 1500);
+        };
+        if (doc.fonts && doc.fonts.ready) {
+          // صبر تا لود کامل فونت Vazirmatn تا PDF با فونت درست چاپ شود
+          doc.fonts.ready.then(() => setTimeout(doPrint, 120));
+          setTimeout(doPrint, 3000); // fallback اگر فونت کند لود شد
+        } else {
+          setTimeout(doPrint, 500);
+        }
+        this.toast("PDF آماده چاپ / ذخیره شد");
+      } catch (e) {
+        console.error("PDF export failed:", e);
+        this.toast("خطا در خروجی PDF", "error");
+      }
     },
 
     // === Excel Export (SheetJS) ===
     exportAccountingExcel() {
       try {
         if (!window.XLSX) {
-          this.toast('\u06a9\u062a\u0627\u0628\u062e\u0627\u0646\u0647 Excel \u0628\u0627\u0631\u06af\u0630\u0627\u0631\u06cc \u0646\u0634\u062f\u0647', 'error');
+          this.toast("کتابخانه Excel بارگذاری نشده", "error");
           return;
         }
         const kpis = AccountingEngine.getKPIs();
@@ -1159,30 +1232,40 @@ document.addEventListener("alpine:init", () => {
         const wb = XLSX.utils.book_new();
         // KPIs sheet
         const kpiRows = [
-          ['\u06af\u0632\u0627\u0631\u0634 \u062d\u0633\u0627\u0628\u062f\u0627\u0631\u06cc'],
-          ['\u0628\u0627\u0632\u0647', this.accountingPeriod],
+          ["گزارش حسابداری — کافه آی‌چای"],
+          ["بازه", this._accountingPeriodLabel()],
           [],
-          ['\u0645\u062c\u0645\u0648\u0639 \u0641\u0631\u0648\u0634', kpis.totalRevenue],
-          ['\u062a\u0639\u062f\u0627\u062f', kpis.totalOrders],
-          ['\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646', kpis.avgOrder],
-          ['\u067e\u0631\u0641\u0631\u0648\u0634\u062a\u0631\u06cc\u0646', kpis.topProduct ? kpis.topProduct.product_name_fa : ''],
+          ["مجموع فروش (تومان)", kpis.totalRevenue],
+          ["تعداد سفارش", kpis.totalOrders],
+          ["میانگین هر سفارش (تومان)", kpis.avgOrder],
+          ["پرفروش‌ترین", kpis.topProduct ? kpis.topProduct.product_name_fa : ""],
         ];
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpiRows), '\u062e\u0644\u0627\u0635\u0647');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(kpiRows), "خلاصه");
         // Products sheet
-        const pData = [['\u0646\u0627\u0645', '\u062a\u0639\u062f\u0627\u062f', '\u062f\u0631\u0622\u0645\u062f', '\u0645\u06cc\u0627\u0646\u06af\u06cc\u0646', '\u0633\u0647\u0645(%)']];
+        const pData = [["نام محصول", "تعداد فروخته‌شده", "درآمد (تومان)", "میانگین قیمت (تومان)", "سهم از فروش (%)"]];
         for (const p of table) pData.push([p.name, p.qty, p.revenue, p.avgPrice, p.share]);
-        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pData), '\u0645\u062d\u0635\u0648\u0644\u0627\u062a');
+        XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(pData), "محصولات");
         // Orders sheet
         if (orders.length > 0) {
-          const oData = [['\u0634\u0645\u0627\u0631\u0647', '\u0648\u0636\u0639\u06cc\u062a', '\u0645\u0628\u0644\u063a', '\u062a\u0639\u062f\u0627\u062f', '\u0645\u06cc\u0632', '\u062a\u0627\u0631\u06cc\u062e']];
-          for (const o of orders) oData.push([o.order_number, Utils.getStatusLabel(o.status), o.total_price, o.item_count, o.table_number||'', Utils.formatDate(o.created_at)]);
-          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(oData), '\u0633\u0641\u0627\u0631\u0634\u0627\u062a');
+          const oData = [["شماره سفارش", "وضعیت", "مبلغ (تومان)", "تعداد آیتم", "میز", "نام مشتری", "تاریخ"]];
+          for (const o of orders) {
+            oData.push([
+              o.order_number,
+              Utils.getStatusLabel(o.status),
+              o.total_price,
+              o.item_count,
+              o.table_number || "",
+              o.customer_name || "",
+              Utils.formatDate(o.created_at),
+            ]);
+          }
+          XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(oData), "سفارشات");
         }
-        XLSX.writeFile(wb, 'ichai-accounting-'+Date.now()+'.xlsx');
-        this.toast('\u0641\u0627\u06cc\u0644 Excel \u062f\u0627\u0646\u0644\u0648\u062f \u0634\u062f');
-      } catch(e) {
-        console.error('Excel export failed:', e);
-        this.toast('\u062e\u0637\u0627 \u062f\u0631 \u062e\u0631\u0648\u062c\u06cc Excel', 'error');
+        XLSX.writeFile(wb, "ichai-accounting-" + Date.now() + ".xlsx");
+        this.toast("فایل Excel دانلود شد");
+      } catch (e) {
+        console.error("Excel export failed:", e);
+        this.toast("خطا در خروجی Excel", "error");
       }
     },
   }));
