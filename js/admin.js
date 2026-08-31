@@ -36,8 +36,15 @@ document.addEventListener("alpine:init", () => {
     accountingData: [],
     accountingLoaded: false,
     accountingPeriod: "30days",
-    accountingCustomFrom: "",
-    accountingCustomTo: "",
+    // BUGFIX (reactivity): the accounting getters below used to read the
+    // plain, non-reactive AccountingEngine object — Alpine saw no dependency
+    // on component state, so the KPI cards never re-evaluated after data
+    // loaded and stayed at their 0 initial render. These snapshots are
+    // refreshed after every load (see loadAccountingData / applyCustomJalaliDate)
+    // and the getters now read them, so everything is reactive.
+    _accKPIs: { totalRevenue: 0, totalOrders: 0, avgOrder: 0, topProduct: null },
+    _accTable: [],
+    _accTop: [],
     _chartInstances: {},
 
     // Developer account & analytics state
@@ -829,8 +836,9 @@ document.addEventListener("alpine:init", () => {
     async loadAccountingData() {
       this.accountingLoaded = false;
       try {
-        await AccountingEngine.loadData(this.accountingPeriod, this.accountingCustomFrom, this.accountingCustomTo);
+        await AccountingEngine.loadData(this.accountingPeriod);
         this.accountingData = AccountingEngine.items;
+        this._refreshAccountingSnapshots();
         this.accountingLoaded = true;
       } catch (e) {
         console.error("Load accounting failed:", e);
@@ -841,16 +849,6 @@ document.addEventListener("alpine:init", () => {
 
     async changeAccountingPeriod(period) {
       this.accountingPeriod = period;
-      await this.loadAccountingData();
-      this.$nextTick(() => this.renderCharts());
-    },
-
-    async applyCustomDate() {
-      if (!this.accountingCustomFrom) {
-        this.toast("تاریخ شروع را وارد کنید", "error");
-        return;
-      }
-      this.accountingPeriod = "custom";
       await this.loadAccountingData();
       this.$nextTick(() => this.renderCharts());
     },
@@ -873,6 +871,7 @@ document.addEventListener("alpine:init", () => {
       this.accountingPeriod = "custom";
       await AccountingEngine.loadData("custom", from.toISOString(), to.toISOString());
       this.accountingData = AccountingEngine.items;
+      this._refreshAccountingSnapshots();
       this.accountingLoaded = true;
       const label =
         Utils.toPersianNum(this.jalaliDay) + " " +
@@ -933,15 +932,26 @@ document.addEventListener("alpine:init", () => {
     },
 
     get accountingKPIs() {
-      return AccountingEngine.getKPIs();
+      // BUGFIX (reactivity): was `return AccountingEngine.getKPIs();` — a
+      // plain non-reactive object, so Alpine never re-rendered the KPI cards
+      // and they stayed at 0 until a full page reload. Now reads a reactive
+      // snapshot refreshed after every accounting data load.
+      return this._accKPIs;
     },
 
     get topProducts() {
-      return AccountingEngine.getTopProducts(10);
+      return this._accTop;
     },
 
     get productTable() {
-      return AccountingEngine.getProductTable();
+      return this._accTable;
+    },
+
+    /** Refresh reactive snapshots after AccountingEngine data changes. */
+    _refreshAccountingSnapshots() {
+      this._accKPIs = AccountingEngine.getKPIs();
+      this._accTable = AccountingEngine.getProductTable();
+      this._accTop = AccountingEngine.getTopProducts(10);
     },
 
     renderCharts() {
@@ -1109,8 +1119,8 @@ document.addEventListener("alpine:init", () => {
         custom: "بازه دلخواه",
       };
       if (this.accountingPeriod === "custom") {
-        const f = this.accountingCustomFrom ? Utils.toPersianDate(this.accountingCustomFrom) : "";
-        const t = this.accountingCustomTo ? Utils.toPersianDate(this.accountingCustomTo) : "";
+        const f = AccountingEngine.customFrom ? Utils.toPersianDate(AccountingEngine.customFrom) : "";
+        const t = AccountingEngine.customTo ? Utils.toPersianDate(AccountingEngine.customTo) : "";
         if (f && t) return f + " تا " + t;
         if (f) return "از " + f;
       }
