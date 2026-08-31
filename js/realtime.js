@@ -99,6 +99,15 @@ const RealtimeManager = {
 function initRealtimeSystem(vm) {
   if (!SupaDB.ready) return;
 
+  // BUGFIX guard: if a channel is already live (e.g. session-resume init ran
+  // and then login() also fired), just refresh the sound preference instead
+  // of creating a duplicate subscription.
+  if (RealtimeManager.channel) {
+    vm.soundEnabled = Utils.getStorage("admin_sound_enabled", true);
+    RealtimeManager.soundEnabled = vm.soundEnabled;
+    return;
+  }
+
   vm.soundEnabled = Utils.getStorage("admin_sound_enabled", true);
 
   RealtimeManager.init({

@@ -150,6 +150,11 @@ document.addEventListener("alpine:init", () => {
         this.isDeveloper =
           this.loginEmail.trim().toLowerCase() === this.DEVELOPER_EMAIL;
         await this.loadData();
+        // BUGFIX: start realtime (sound + notification + auto-jump to orders)
+        // after a FRESH login too — previously it only started in init() on
+        // session-resume, so a newly logged-in admin never got new-order
+        // notifications until they refreshed the page (F5).
+        this.$nextTick(() => initRealtimeSystem(this));
         this.toast("با موفقیت وارد شدید");
       } catch {
         this.loginError = "ایمیل یا رمز عبور اشتباه است";
@@ -172,8 +177,16 @@ document.addEventListener("alpine:init", () => {
     },
 
     async logout() {
+      // BUGFIX: stop the realtime subscription on logout — previously the
+      // channel stayed open after logout (leak; old session's handlers kept
+      // running) and re-login created a second live channel.
+      stopRealtimeSystem();
+      this._newOrdersCount = 0;
+      document.title = "پنل مدیریت — کافه آی‌چای";
       await SupaDB.signOut();
       this.isAuthenticated = false;
+      this.orders = [];
+      this.ordersLoaded = false;
       this.categories = [];
       this.products = [];
       this.feedbacks = [];
