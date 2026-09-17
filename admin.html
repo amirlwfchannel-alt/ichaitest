@@ -2,31 +2,23 @@
 <html lang="fa" dir="rtl">
 <head>
   <meta charset="UTF-8">
+  <meta name="robots" content="noindex, nofollow">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>پنل مدیریت — کافه آی‌چای</title>
-  <link rel="icon" type="image/webp" href="logo/no-background-logo-1.webp">
+  <link rel="icon" type="image/webp" href="img/logo-128.webp">
 
   <!-- Local Vazirmatn Font -->
   <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="preload" href="fonts/subset/Vazirmatn-Regular-sub.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/subset/Vazirmatn-Black-sub.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Tailwind CSS (local) -->
-  <script src="lib/tailwindcss.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { fa: ['Vazirmatn', 'Tahoma', 'sans-serif'] },
-        }
-      }
-    };
-  </script>
+  <!-- Generated locally; no runtime Tailwind compiler -->
+  <link rel="stylesheet" href="css/tw.min.css?v=6b650d44cfba">
 
   <!-- Alpine.js (local) -->
-  <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
-  <link rel="stylesheet" href="css/admin.css?v=20260831a">
-  <link rel="stylesheet" href="css/smoothness.css?v=20260824a">
+  <link rel="stylesheet" href="css/admin.min.css?v=e234be6ebaa0">
+  <link rel="stylesheet" href="css/smoothness.min.css?v=de950496df05">
 </head>
 
 <body class="admin-body font-fa" x-data="adminPanel" :class="{ 'dark-mode': darkMode }">
@@ -57,12 +49,12 @@
   </div>
 
   <!-- ═══════════ ADMIN PANEL ═══════════ -->
-  <div x-show="isAuthenticated">
+  <div x-show="isAuthenticated" x-cloak>
 
   <!-- ═══════════ SIDEBAR ═══════════ -->
   <aside class="admin-sidebar" :class="{ 'open': sidebarOpen }">
     <div class="sidebar-logo">
-      <img src="logo/no-background-logo-1.webp" alt="کافه آی‌چای" class="sidebar-logo-img">
+      <img src="img/logo-128.webp" width="128" height="128" decoding="async" alt="کافه آی‌چای" class="sidebar-logo-img">
       <h2>کافه آی‌چای</h2>
       <p class="text-xs mt-1" style="color:var(--admin-text-muted)">پنل مدیریت</p>
     </div>
@@ -859,15 +851,18 @@
   </div>
 
   <!-- Scripts -->
-  <script src="lib/supabase.min.js"></script>
-  <script src="lib/chart.min.js"></script>
-  <script src="js/config.js?v=20260823b"></script>
-  <script src="js/utils.js?v=20260823b"></script>
-  <script src="js/data.js?v=20260823b"></script>
-  <script src="js/supabase-client.js?v=20260823g"></script>
-  <script src="js/realtime.js?v=20260831a"></script>
-  <script src="js/accounting.js?v=20260831a"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-  <script src="js/admin.js?v=20260831c"></script>
+  <script defer src="lib/supabase.min.js"></script>
+  <script defer src="lib/chart.min.js"></script>
+  <script defer src="js/config.min.js?v=8401f979410c"></script>
+  <script defer src="js/img-map.min.js?v=431a495d3fcd"></script>
+  <script defer src="js/images.min.js?v=30cb818a12fd"></script>
+  <script defer src="js/utils.min.js?v=639101ed10c5"></script>
+  <script defer src="js/data.min.js?v=c97c3c49c705"></script>
+  <script defer src="js/supabase-client.min.js?v=4dbd85612acc"></script>
+  <script defer src="js/realtime.min.js?v=18cdde143ff9"></script>
+  <script defer src="js/accounting.min.js?v=2eb6274c8863"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script defer src="js/admin.min.js?v=f8402cb83ec8"></script>
+  <script defer src="lib/alpine.min.js?v=20260823b"></script>
 </body>
 </html>

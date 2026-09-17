@@ -7,11 +7,22 @@
 // OrderCookie — persisting customer orders in browser
 const OrderCookie = {
   KEY: "ichai_my_orders",
+  _memory: null,
+
+  _write(orders) {
+    this._memory = orders;
+    try {
+      localStorage.setItem(this.KEY, JSON.stringify(orders));
+      this._memory = null;
+    } catch { /* Keep confirmed orders for this page session. */ }
+  },
 
   getOrders() {
+    if (this._memory) return this._memory;
     try {
       const raw = localStorage.getItem(this.KEY);
-      return raw ? JSON.parse(raw) : [];
+      const orders = raw ? JSON.parse(raw) : [];
+      return Array.isArray(orders) ? orders.filter(o => o && typeof o.order_number === "string" && o.order_number.length > 0).slice(0, 50) : [];
     } catch {
       return [];
     }
@@ -31,7 +42,7 @@ const OrderCookie = {
       items: orderData.items || [],
     });
     if (orders.length > 50) orders.length = 50;
-    localStorage.setItem(this.KEY, JSON.stringify(orders));
+    this._write(orders);
   },
 
   updateStatus(orderNumber, newStatus) {
@@ -39,7 +50,7 @@ const OrderCookie = {
     const idx = orders.findIndex((o) => o.order_number === orderNumber);
     if (idx > -1) {
       orders[idx].status = newStatus;
-      localStorage.setItem(this.KEY, JSON.stringify(orders));
+      this._write(orders);
     }
   },
 };
@@ -155,10 +166,24 @@ const CustomerTracker = {
   },
 };
 
+// Normalize old numeric-string carts, discard corrupted entries and duplicates.
+function normalizeCartItems(value) {
+  if (!Array.isArray(value)) return [];
+  const ids = new Set();
+  return value.flatMap(item => {
+    if (!item || typeof item.id !== "string" || !item.id.trim() || ids.has(item.id)) return [];
+    const price = typeof item.price === "string" && item.price.trim() ? Number(item.price) : item.price;
+    const quantity = typeof item.quantity === "string" && item.quantity.trim() ? Number(item.quantity) : item.quantity;
+    if (!Number.isSafeInteger(price) || price < 0 || price > 2147483647 || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 999 || price * quantity > 2147483647) return [];
+    ids.add(item.id);
+    return [{ ...item, price, quantity }];
+  }).slice(0, 100);
+}
+
 // Alpine store registration
 document.addEventListener("alpine:init", () => {
   Alpine.store("cart", {
-    items: Utils.getStorage("ichai_cart", []),
+    items: normalizeCartItems(Utils.getStorage("ichai_cart", [])),
     showPanel: false,
     activeTab: "cart", // 'cart' | 'track'
     isSubmitting: false,
@@ -190,8 +215,13 @@ document.addEventListener("alpine:init", () => {
       Utils.setStorage("ichai_cart", this.items);
     },
     add(product) {
+      if (this.isSubmitting) return;
+      const valid = normalizeCartItems([{ ...product, quantity: 1 }])[0];
+      if (!valid) return;
+      product = valid;
       const existing = this.items.find((i) => i.id === product.id);
       if (existing) {
+        if (existing.quantity >= 999) return;
         existing.quantity++;
       } else {
         this.items.push({
@@ -206,17 +236,21 @@ document.addEventListener("alpine:init", () => {
       this.showPanel = true;
     },
     remove(productId) {
+      if (this.isSubmitting) return;
       this.items = this.items.filter((i) => i.id !== productId);
       this._save();
     },
     updateQty(productId, delta) {
+      if (this.isSubmitting) return;
+      if (!Number.isSafeInteger(delta)) return;
       const item = this.items.find((i) => i.id === productId);
       if (!item) return;
-      item.quantity = Math.max(0, item.quantity + delta);
+      item.quantity = Math.min(999, Math.max(0, item.quantity + delta));
       if (item.quantity === 0) this.remove(productId);
       else this._save();
     },
     clear() {
+      if (this.isSubmitting) return;
       this.items = [];
       this._save();
     },
@@ -244,22 +278,24 @@ document.addEventListener("alpine:init", () => {
           })),
         };
         const result = await SupaDB.createOrder(orderData);
+        if (!result || !result.id || !result.order_number) throw new Error("Missing order acknowledgement");
         OrderCookie.addOrder(result.order_number, {
           order_id: result.id,
           status: result.status || "new",
           total_price: result.total_price,
           item_count: result.item_count,
           created_at: result.created_at,
-          table_number: this.tableNumber,
+          table_number: orderData.table_number,
           items: result.items || orderData.items,
         });
         this.orderSuccess = result;
-        this.clear();
-        this.tableNumber = "";
-        this.notes = "";
+        this.items = [];
+        this._save();
+        if (this.tableNumber === orderData.table_number) this.tableNumber = "";
+        if (this.notes === orderData.notes) this.notes = "";
         this.myOrders = OrderCookie.getOrders();
         // Ensure realtime tracker is running
-        this._ensureTracker();
+        try { this._ensureTracker(); } catch { /* Tracking is not order submission. */ }
       } catch (e) {
         console.error("Order submit failed:", e);
         this.orderError = "خطا در ثبت سفارش. دوباره تلاش کنید.";

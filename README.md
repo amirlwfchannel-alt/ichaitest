@@ -1,161 +1,60 @@
-# کافه آی‌چای — منوی دیجیتال
+# کافه آی‌چای
 
-یک وب‌سایت مدرن، لوکس و تمام‌عیار برای نمایش منوی کافه به همراه پنل مدیریت.
-
-## ساختار پروژه
-
-```
-kafe-aichai-1/
-├── index.html          # صفحه منوی عمومی (نمایشی)
-├── admin.html          # پنل مدیریت
-├── css/
-│   ├── main.css        # استایل‌های صفحه منو
-│   └── admin.css       # استایل‌های پنل مدیریت
-├── js/
-│   ├── data.js         # داده‌های پیش‌فرض (دسته‌بندی‌ها، محصولات، اطلاعات کافه)
-│   ├── utils.js        # توابع کمکی (فرمت قیمت، اعداد فارسی، localStorage)
-│   ├── app.js          # منطق صفحه منو (Alpine.js)
-│   └── admin.js        # منطق پنل مدیریت (Alpine.js)
-├── assets/
-│   └── images/         # تصاویر (اختیاری — از URL استفاده می‌شود)
-└── README.md
-```
+منوی فارسی RTL با Alpine.js، Supabase، پنل مدیریت، سفارش و حسابداری جلالی.
 
 ## اجرا
 
-کافیست فایل‌ها را در یک وب‌سرور سرو کنید یا `index.html` را مستقیماً در مرورگر باز کنید.
+از ریشهٔ پروژه با Node.js 22+:
 
 ```bash
-# با Python
-python3 -m http.server 8000
-
-# سپس در مرورگر:
-# http://localhost:8000/index.html
-# http://localhost:8000/admin.html
+npm ci
+```
+```bash
+npm test
+```
+```bash
+npm run build
+```
+```bash
+python -m http.server 8126 --bind 127.0.0.1
 ```
 
-## ادغام با Django
+- سایت: http://127.0.0.1:8126/
+- پنل: http://127.0.0.1:8126/admin.html
+- گالری: http://127.0.0.1:8126/templates/
 
-### ۱. کپی فایل‌های استاتیک
+فایل‌های غیر min را ویرایش و build کنید. build فایل‌های فشرده و hash مراجع را به‌روز می‌کند؛ deploy نمی‌کند. بهبودهای کاراییِ قبلی حفظ شده‌اند.
 
-فایل‌ها را در پوشه `static` پروژه Django خود قرار دهید:
+## سه قالب
 
-```
-your_django_project/
-├── your_app/
-│   ├── static/
-│   │   └── cafe/
-│   │       ├── css/
-│   │       │   ├── main.css
-│   │       │   └── admin.css
-│   │       ├── js/
-│   │       │   ├── data.js
-│   │       │   ├── utils.js
-│   │       │   ├── app.js
-│   │       │   └── admin.js
-│   │       └── assets/
-│   │           └── images/
-│   ├── templates/
-│   │   └── cafe/
-│   │       ├── index.html
-│   │       └── admin.html
-│   ├── views.py
-│   └── urls.py
+`templates/classic/` کافه روایت، گرم؛ `templates/garden/` کافه برگ، روشن و سبز؛ `templates/midnight/` کافه نیمه‌شب، تیره.
+
+قالب‌ها جستجو، فیلتر و سبد محلی مستقل دارند. هویت و قیمت‌ها نمونه‌اند؛ هیچ سفارش واقعی ارسال نمی‌کنند. برای استفاده، کل پروژه یا پوشهٔ templates همراه fonts و img را با همان ساختار مسیر منتشر کنید. متن و قیمت هر قالب داخل HTML است؛ CSS مشترک در templates/shared.css و رفتار در demo.js/model.js است. قالب‌های نمونه noindex هستند.
+
+## بررسی مرورگر
+
+Chrome جدا روی CDP port 9334 و سرور محلی بالا نیاز است. Python به websocket-client نیاز دارد.
+
+```bash
+python tests/browser_smoke.py
 ```
 
-### ۲. تنظیمات Django
+تست اصلی عمداً ارتباط خارجی را می‌بندد؛ داده‌های پیش‌فرض را تزریق می‌کند و روی دیتابیس زنده چیزی نمی‌نویسد.
 
-در `settings.py`:
-
-```python
-STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    BASE_DIR / 'static',
-]
+```bash
+CDP_URL=http://127.0.0.1:9334 TEMPLATE_BASE_URL=http://127.0.0.1:8126 node templates/qa/browser.cjs
 ```
 
-### ۳. ویوها
+فرمان دوم برای bash است؛ پنج اندازهٔ صفحه، no-JS، سبد، جستجو، Escape و focus را بررسی می‌کند.
 
-در `views.py`:
+## ابزار آمادهٔ سئوی انتشار
 
-```python
-from django.shortcuts import render
+پس از تأیید آدرس نهایی، در bash مقدار واقعی SITE_URL را به `node tools/deployment-seo.cjs` بدهید. ابزار canonical، OG URL/image و sitemap.xml را تولید می‌کند؛ بدون آدرس تأییدشده عمداً روی سایت اعمال نشده است.
 
-def menu_view(request):
-    return render(request, 'cafe/index.html')
+## قبل از انتشار
 
-def admin_view(request):
-    return render(request, 'cafe/admin.html')
-```
+این مخزن با `ichaicafe/menu`، مخزن سایت فعلی، جداست. آدرس انتشار تأیید نشده؛ canonical و sitemap از روی remote حدس زده نشده‌اند و باید بعد از مشخص شدن آدرس نهایی تکمیل شوند. عنوان، توضیح، OG پایه، schema حداقلی WebSite، noindex پنل و shell قابل‌خواندن بدون JS اضافه شده‌اند. این نسخه SSR کامل نیست و قیمت روز به منوی پویا وابسته است. اطلاعات تماس پیش‌فرض در js/data.js نیاز به تأیید مالک دارند.
 
-### ۴. URLها
+**امنیت backend هنوز تأیید نشده است.** سیاست‌های SQL موجود خواندن عمومی سفارش‌ها و دسترسی همهٔ authenticatedها را مجاز می‌کنند. قیمت از سمت مرورگر می‌آید و ثبت سربرگ/اقلام در دو درخواست اتمیک نیست. پیش از استفادهٔ واقعی باید مجوز مدیر محدود، پیگیری با توکن اختصاصی و ثبت اتمیک با قیمت‌گذاری سرور پیاده و در محیط آزمایشی تأیید شود. این کار هیچ migration روی دیتابیس زنده اجرا نکرده است. noindex و قفل ظاهری پنل جای RLS را نمی‌گیرند.
 
-در `urls.py`:
-
-```python
-from django.urls import path
-from . import views
-
-urlpatterns = [
-    path('', views.menu_view, name='menu'),
-    path('admin-panel/', views.admin_view, name='admin-panel'),
-]
-```
-
-### ۵. آپدیت مسیرها
-
-در فایل‌های HTML، مسیرهای CSS و JS را با `{% static %}` تگ جایگزین کنید:
-
-```html
-<!-- قبل -->
-<link rel="stylesheet" href="css/main.css">
-<script src="js/app.js"></script>
-
-<!-- بعد -->
-{% load static %}
-<link rel="stylesheet" href="{% static 'cafe/css/main.css' %}">
-<script src="{% static 'cafe/js/app.js' %}"></script>
-```
-
-## فناوری‌ها
-
-- **Tailwind CSS v3.4** (Play CDN)
-- **Alpine.js v3**
-- **Vazirmatn** (فونت فارسی از Google Fonts)
-- بدون نیاز به build step یا npm
-
-## ویژگی‌ها
-
-### صفحه منو (index.html)
-- طرح تاریک لوکس با تم مشکی، طلایی و قهوه‌ای
-- بخش Hero تمام‌صفحه با انیمیشن
-- نوار ناوبری چسبان با جستجو
-- فیلتر دسته‌بندی با چیپ‌های قابل کلیک
-- شبکه محصولات واکنش‌گرا (۱ تا ۴ ستون)
-- بارگذاری تنبل تصاویر
-- اعداد و قیمت‌های فارسی
-- علاقه‌مندی‌ها (ذخیره در localStorage)
-- انیمیشن‌های ورودی و تعاملات ظریف
-- حالت خالی زیبا
-- RTL کامل
-
-### پنل مدیریت (admin.html)
-- داشبورد با آمار
-- مدیریت محصولات (CRUD کامل)
-- مدیریت دسته‌بندی‌ها (CRUD کامل)
-- مدیریت محتوای کافه
-- سفارشات (دمو)
-- تنظیمات (تم، خروجی/ورودی، بازنشانی)
-- مرتب‌سازی با Drag & Drop
-- جدول‌های قابل جستجو
-- پیش‌نمایش تصویر از URL
-- حالت تاریک/روشن
-- اعلان‌های Toast
-
-## مجوز
-
-رایگان و آزاد برای استفاده.
-
----
-
-طراحی و توسعه توسط [amirlwf](https://amirlwf.ir)
+کلید anon عمومی در config مجاز است؛ service-role، رمز و env نباید commit شوند. نتایج و محدودیت‌ها در docs/AUDIT.md آمده‌اند.

@@ -282,34 +282,12 @@ const SupaDB = {
       name,
       message,
     };
-    if (!this.ready) {
-      const localRecord = {
-        ...record,
-        id: Utils.generateId(),
-        created_at: new Date().toISOString(),
-      };
-      this._localSave("cafe_feedbacks", localRecord);
-      return localRecord;
-    }
-    try {
-      const { data, error } = await this.client
-        .from("feedbacks")
-        .insert(record)
-        .select()
-        .single();
-      if (error) throw error;
-      this.cleanOldFeedbacks();
-      return data;
-    } catch (e) {
-      console.warn("Supabase submit feedback failed, saving locally:", e);
-      const localRecord = {
-        ...record,
-        id: Utils.generateId(),
-        created_at: new Date().toISOString(),
-      };
-      this._localSave("cafe_feedbacks", localRecord);
-      return localRecord;
-    }
+    if (!this.ready) throw new Error("اتصال برقرار نیست؛ پیام ارسال نشد");
+    // Public feedback permits INSERT, not reading other visitors' messages.
+    // Local persistence is not delivery and must never report success.
+    const { error } = await this.client.from("feedbacks").insert(record);
+    if (error) throw error;
+    return record;
   },
 
   async cleanOldFeedbacks() {
@@ -605,38 +583,41 @@ const SupaDB = {
    * Returns the created order with its items.
    */
   async createOrder(orderData) {
-    if (!this.ready) {
-      // Offline fallback: save to localStorage
-      const order = {
-        id: "ord-" + Date.now(),
-        order_number: this._generateOrderNumber(),
-        status: "new",
-        customer_name: orderData.customer_name || "",
-        table_number: orderData.table_number || "",
-        phone: orderData.phone || "",
-        notes: orderData.notes || "",
-        total_price: orderData.total_price,
-        item_count: orderData.items.length,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        items: orderData.items.map((it) => ({
-          id: Utils.generateId(),
-          order_id: "ord-" + Date.now(),
-          product_id: it.product_id,
-          product_name_fa: it.product_name_fa,
-          product_image_url: it.product_image_url || null,
-          product_price: it.product_price,
-          quantity: it.quantity,
-          subtotal: it.subtotal,
-          created_at: new Date().toISOString(),
-        })),
-      };
-      this._localSave("cafe_orders", order);
-      return order;
+    if (!this.ready || !this.client) throw new Error("اتصال به سامانه سفارش برقرار نیست؛ سفارش ارسال نشد.");
+
+    // Validate BEFORE any write: the orders insert and order_items insert are
+    // two separate statements (no server transaction), so rejecting bad input
+    // up front avoids partial writes caused by malformed client input.
+    if (!orderData || !Array.isArray(orderData.items) || orderData.items.length === 0) {
+      throw new Error("سبد سفارش خالی است.");
+    }
+    if (orderData.items.length > 100) {
+      throw new Error("تعداد اقلام سفارش بیش از حد مجاز است.");
+    }
+    const seenIds = new Set();
+    for (const it of orderData.items) {
+      if (!it || typeof it !== "object") throw new Error("قالب اقلام سفارش نامعتبر است.");
+      const quantity = it.quantity;
+      if (!Number.isSafeInteger(quantity) || quantity < 1 || quantity > 999) {
+        throw new Error("تعداد هر قلم باید عدد صحیح مثبت باشد.");
+      }
+      const price = it.product_price;
+      if (!Number.isSafeInteger(price) || price < 0 || price > 2147483647) {
+        throw new Error("قیمت قلم سفارش نامعتبر است.");
+      }
+      if (it.product_id != null && (typeof it.product_id !== "string" || it.product_id.length > 100)) {
+        throw new Error("شناسه محصول نامعتبر است.");
+      }
+      if (it.product_id != null && seenIds.has(it.product_id)) {
+        throw new Error("هر محصول فقط یک بار در سفارش می‌تواند باشد.");
+      }
+      seenIds.add(it.product_id);
     }
 
     // Sanitize order
     const orderNumber = this._generateOrderNumber();
+    const total_price = orderData.items.reduce((sum, it) => sum + it.product_price * it.quantity, 0);
+    if (!Number.isSafeInteger(total_price) || total_price > 2147483647) throw new Error("مبلغ سفارش بیش از حد مجاز است.");
     const sanitized = {
       order_number: orderNumber,
       status: "new",
@@ -644,8 +625,8 @@ const SupaDB = {
       table_number: String(orderData.table_number || "").slice(0, 20),
       phone: String(orderData.phone || "").slice(0, 20),
       notes: String(orderData.notes || "").slice(0, 500),
-      total_price: Math.max(0, Math.floor(Number(orderData.total_price) || 0)),
-      item_count: orderData.items.length,
+      total_price,
+      item_count: orderData.items.reduce((sum, it) => sum + it.quantity, 0),
     };
 
     // Insert order
@@ -664,7 +645,7 @@ const SupaDB = {
       product_image_url: it.product_image_url || null,
       product_price: Math.max(0, Math.floor(Number(it.product_price) || 0)),
       quantity: Math.max(1, Math.floor(Number(it.quantity) || 1)),
-      subtotal: Math.max(0, Math.floor(Number(it.subtotal) || 0)),
+      subtotal: it.product_price * it.quantity,
     }));
 
     const { error: itemsError } = await this.client

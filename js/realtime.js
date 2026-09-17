@@ -62,6 +62,7 @@ const RealtimeManager = {
   },
 
   unsubscribe() {
+    this._generation = (this._generation || 0) + 1;
     if (this.channel) {
       SupaDB.unsubscribeOrders(this.channel);
       this.channel = null;
@@ -110,6 +111,7 @@ function initRealtimeSystem(vm) {
 
   vm.soundEnabled = Utils.getStorage("admin_sound_enabled", true);
 
+  const generation = RealtimeManager._generation = (RealtimeManager._generation || 0) + 1;
   RealtimeManager.init({
     soundEnabled: vm.soundEnabled,
     onNewOrder: async (orderRow) => {
@@ -122,8 +124,10 @@ function initRealtimeSystem(vm) {
         console.warn("Fetch realtime order items failed:", e);
       }
 
+      if (generation !== RealtimeManager._generation) return;
+      // The list may already contain this order from a fetch or replay.
+      if (vm.orders.some((existing) => existing.id === order.id)) return;
       vm.orders.unshift(order);
-      vm.ordersLoaded = true;
       vm._newOrdersCount = (vm._newOrdersCount || 0) + 1;
       vm.toast("🛒 سفارش جدید از میز " + (order.table_number || "?"), "success");
 

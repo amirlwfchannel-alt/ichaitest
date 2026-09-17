@@ -130,16 +130,11 @@ document.addEventListener("alpine:init", () => {
         }
       }
 
-      // If Supabase not configured, load from localStorage as demo
+      // Unavailable configuration is not an authenticated demo session.
+      // Keep the login gate closed; never expose cached private data here.
       if (!SupaDB.ready) {
-        this.categories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
-        this.products = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
-        this.cafeInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
-        this.feedbacks = Utils.getStorage("cafe_feedbacks", []);
-        this.orders = Utils.getStorage("cafe_orders", []);
-        this.categories.sort((a, b) => a.order - b.order);
-        this.products.sort((a, b) => a.order - b.order);
-        this.isAuthenticated = true;
+        this.isAuthenticated = false;
+        this.loginError = "اتصال به سرویس برقرار نیست؛ دوباره تلاش کنید";
       }
     },
 
@@ -188,16 +183,36 @@ document.addEventListener("alpine:init", () => {
       // channel stayed open after logout (leak; old session's handlers kept
       // running) and re-login created a second live channel.
       stopRealtimeSystem();
+      this._sessionGeneration = (this._sessionGeneration || 0) + 1;
       this._newOrdersCount = 0;
       document.title = "پنل مدیریت — کافه آی‌چای";
-      await SupaDB.signOut();
       this.isAuthenticated = false;
+      this.isDeveloper = false;
+      this.loginPassword = "";
+      clearInterval(this._autoDeliverTimer);
+      this._autoDeliverTimer = null;
+      clearTimeout(this.toastTimer);
+      for (const chart of Object.values(this._chartInstances)) chart.destroy();
+      this._chartInstances = {};
+      this.visitStats = null;
+      this.dbUsage = null;
+      this.accountingData = [];
+      this.accountingLoaded = false;
+      AccountingEngine._loadRequest = (AccountingEngine._loadRequest || 0) + 1;
+      AccountingEngine.orders = [];
+      AccountingEngine.items = [];
+      this._refreshAccountingSnapshots();
       this.orders = [];
       this.ordersLoaded = false;
       this.categories = [];
       this.products = [];
       this.feedbacks = [];
       this.cafeInfo = {};
+      try {
+        await SupaDB.signOut();
+      } catch (e) {
+        this.toast("خروج از سرور ناموفق بود؛ دوباره تلاش کنید", "error");
+      }
     },
 
     // Data management
@@ -635,7 +650,6 @@ document.addEventListener("alpine:init", () => {
       this._resetTitle();
       if (!this.ordersLoaded) {
         await this.loadOrders();
-        this.ordersLoaded = true;
       }
     },
 
@@ -670,11 +684,18 @@ document.addEventListener("alpine:init", () => {
     },
 
     async loadOrders() {
+      const generation = this._sessionGeneration || 0;
       try {
-        this.orders = await SupaDB.fetchOrders();
+        const orders = await SupaDB.fetchOrders();
+        if (generation !== (this._sessionGeneration || 0)) return false;
+        this.orders = orders;
         await this.autoDeliverStale();
+        if (generation !== (this._sessionGeneration || 0)) return false;
         this.startAutoDeliverTimer();
+        this.ordersLoaded = true;
+        return true;
       } catch (e) {
+        this.ordersLoaded = false;
         console.error("Load orders failed:", e);
         this.toast("خطا در بارگذاری سفارشات", "error");
       }
@@ -836,10 +857,14 @@ document.addEventListener("alpine:init", () => {
     async loadAccountingData() {
       this.accountingLoaded = false;
       try {
-        await AccountingEngine.loadData(this.accountingPeriod);
+        const loaded = await AccountingEngine.loadData(this.accountingPeriod,
+          this.accountingPeriod === "custom" ? AccountingEngine.customFrom : "",
+          this.accountingPeriod === "custom" ? AccountingEngine.customTo : "");
+        if (!loaded) return false;
         this.accountingData = AccountingEngine.items;
         this._refreshAccountingSnapshots();
         this.accountingLoaded = true;
+        return true;
       } catch (e) {
         console.error("Load accounting failed:", e);
         this.accountingLoaded = false;
@@ -869,10 +894,9 @@ document.addEventListener("alpine:init", () => {
       }
       const to = new Date(from.getTime() + 86400000 - 1);
       this.accountingPeriod = "custom";
-      await AccountingEngine.loadData("custom", from.toISOString(), to.toISOString());
-      this.accountingData = AccountingEngine.items;
-      this._refreshAccountingSnapshots();
-      this.accountingLoaded = true;
+      AccountingEngine.customFrom = from.toISOString();
+      AccountingEngine.customTo = to.toISOString();
+      if (!await this.loadAccountingData()) return;
       const label =
         Utils.toPersianNum(this.jalaliDay) + " " +
         (["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"][this.jalaliMonth - 1] || "") +
@@ -1099,11 +1123,19 @@ document.addEventListener("alpine:init", () => {
     },
 
     exportOrdersCSV() {
+      if (!AccountingEngine.orders.length) {
+        this.toast("داده‌ای برای خروجی وجود ندارد", "error");
+        return;
+      }
       AccountingEngine.exportOrdersCSV();
       this.toast("فایل CSV سفارشات دانلود شد");
     },
 
     exportProductsCSV() {
+      if (!AccountingEngine.getProductTable().length) {
+        this.toast("داده‌ای برای خروجی وجود ندارد", "error");
+        return;
+      }
       AccountingEngine.exportProductsCSV();
       this.toast("\u0641\u0627\u06cc\u0644 CSV \u0645\u062d\u0635\u0648\u0644\u0627\u062a \u062f\u0627\u0646\u0644\u0648\u062f \u0634\u062f");
     },
@@ -1129,6 +1161,9 @@ document.addEventListener("alpine:init", () => {
 
     exportAccountingPDF() {
       try {
+        const text = (value) => String(value == null ? "" : value)
+          .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
         const kpis = AccountingEngine.getKPIs();
         const table = AccountingEngine.getProductTable();
         const periodLabel = this._accountingPeriodLabel();
@@ -1145,7 +1180,7 @@ document.addEventListener("alpine:init", () => {
         let rows = "";
         for (const p of table) {
           rows +=
-            "<tr><td>" + p.name +
+            "<tr><td>" + text(p.name) +
             "</td><td>" + Utils.toPersianNum(p.qty) +
             '</td><td class="gold">' + Utils.formatPrice(p.revenue) +
             "</td><td>" + Utils.formatPrice(p.avgPrice) +
@@ -1182,12 +1217,12 @@ document.addEventListener("alpine:init", () => {
           ".foot a{color:#b8860b;text-decoration:none;font-weight:800}" +
           "</style></head><body>" +
           '<div class="head"><div><h1>☕ گزارش حسابداری — کافه آی‌چای</h1><div class="brand">منوی دیجیتال کافه</div></div>' +
-          '<div class="meta"><div><b>بازه:</b> ' + periodLabel + "</div><div><b>تاریخ گزارش:</b> " + nowFa + "</div></div></div>" +
+          '<div class="meta"><div><b>بازه:</b> ' + text(periodLabel) + "</div><div><b>تاریخ گزارش:</b> " + nowFa + "</div></div></div>" +
           '<div class="kpis">' +
           '<div class="kpi"><div class="val">' + Utils.formatPrice(kpis.totalRevenue) + '</div><div class="lbl">مجموع فروش</div></div>' +
           '<div class="kpi"><div class="val">' + Utils.toPersianNum(kpis.totalOrders) + '</div><div class="lbl">تعداد سفارش</div></div>' +
           '<div class="kpi"><div class="val">' + Utils.formatPrice(kpis.avgOrder) + '</div><div class="lbl">میانگین هر سفارش</div></div>' +
-          '<div class="kpi"><div class="val">' + (kpis.topProduct ? kpis.topProduct.product_name_fa : "—") + '</div><div class="lbl">پرفروش‌ترین</div></div>' +
+          '<div class="kpi"><div class="val">' + text(kpis.topProduct ? kpis.topProduct.product_name_fa : "—") + '</div><div class="lbl">پرفروش‌ترین</div></div>' +
           "</div>" +
           "<h2>مصرف محصولات</h2>" +
           '<table><thead><tr><th>نام محصول</th><th>تعداد</th><th>درآمد</th><th>میانگین قیمت</th><th>سهم از فروش</th></tr></thead><tbody>' +

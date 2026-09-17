@@ -48,7 +48,13 @@ const Utils = {
   getStorage(key, fallback = null) {
     try {
       const raw = localStorage.getItem(key);
-      return raw ? JSON.parse(raw) : fallback;
+      if (raw == null) return fallback;
+      const parsed = JSON.parse(raw);
+      if (parsed == null) return fallback;
+      // A non-null default declares the expected top-level JSON shape.
+      if (fallback !== null && (typeof parsed !== typeof fallback ||
+          Array.isArray(parsed) !== Array.isArray(fallback))) return fallback;
+      return parsed;
     } catch {
       return fallback;
     }
@@ -235,16 +241,15 @@ const Utils = {
       case "30days": {
         const days = period === "7days" ? 7 : 30;
         const start = this.startOfTehranDay(now);
-        start.setUTCSeconds(start.getUTCSeconds() - days * 86400);
+        start.setUTCSeconds(start.getUTCSeconds() - (days - 1) * 86400);
         return start.toISOString();
       }
       case "month": {
-        const ym = new Intl.DateTimeFormat("en-CA", {
-          timeZone: this.TZ_IRAN,
-          year: "numeric",
-          month: "2-digit",
-        }).format(now);
-        return new Date(ym + "-01T00:00:00+03:30").toISOString();
+        const parts = new Intl.DateTimeFormat("en-u-ca-persian", {
+                  timeZone: this.TZ_IRAN, year: "numeric", month: "numeric",
+                }).formatToParts(now);
+                const part = (type) => Number(parts.find((p) => p.type === type).value);
+                return this.jalaliToUtc(part("year"), part("month"), 1).toISOString();
       }
       case "all":
         return null;

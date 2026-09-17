@@ -26,26 +26,50 @@ document.addEventListener("alpine:init", () => {
     feedbackError: "",
 
     // Init
-    async init() {
-      SupaDB.init();
-      await this.loadData();
+    init() {
+      const hero = document.querySelector(".hero-content");
+      if (hero && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        hero.classList.add("hero-in-start");
+        requestAnimationFrame(() => {
+          requestAnimationFrame(() => hero.classList.add("hero-in-end"));
+        });
+      }
+      // Paint cached/default menu data without waiting for network requests.
+      const cachedCategories = Utils.getStorage("cafe_categories", DEFAULT_CATEGORIES);
+      const cachedProducts = Utils.getStorage("cafe_products", DEFAULT_PRODUCTS);
+      const cachedInfo = Utils.getStorage("cafe_info", DEFAULT_CAFE_INFO);
+      this.categories = (Array.isArray(cachedCategories) ? cachedCategories : DEFAULT_CATEGORIES)
+        .filter((item) => item && typeof item.id === 'string').slice().sort((a, b) => a.order - b.order);
+      this.products = (Array.isArray(cachedProducts) ? cachedProducts : DEFAULT_PRODUCTS)
+        .filter((item) => item && typeof item.id === 'string').slice().sort((a, b) => a.order - b.order);
+      this.cafeInfo = cachedInfo && typeof cachedInfo === 'object' && !Array.isArray(cachedInfo)
+        ? { ...DEFAULT_CAFE_INFO, ...cachedInfo } : { ...DEFAULT_CAFE_INFO };
       this.loadFavorites();
       this.loadDarkMode();
-      this.trackVisit();
-      // Start live order tracking if there are existing orders
-      this._initLiveTracking();
-      setTimeout(() => {
-        this.isLoaded = true;
-        this.$nextTick(() => this.observeFadeIns());
-      }, 600);
+      this.isLoaded = true;
+      this.$nextTick(() => this.observeFadeIns());
       this.setupNavbar();
+
+      // Deferred scripts provide Supabase before Alpine starts. Keep its
+      // synchronous initialization ahead of analytics and order tracking.
+      SupaDB.init();
+      this.trackVisit();
+      this._initLiveTracking();
+      this.loadData()
+        .then(() => this.$nextTick(() => this.observeFadeIns()))
+        .catch((error) => console.warn("Menu refresh failed; keeping cached data:", error));
     },
 
     // Load data from Supabase with localStorage fallback
     async loadData() {
-      this.categories = await SupaDB.fetchCategories();
-      this.products = await SupaDB.fetchProducts();
-      this.cafeInfo = await SupaDB.fetchCafeInfo();
+      const [categories, products, cafeInfo] = await Promise.all([
+        SupaDB.fetchCategories(),
+        SupaDB.fetchProducts(),
+        SupaDB.fetchCafeInfo(),
+      ]);
+      this.categories = categories;
+      this.products = products;
+      this.cafeInfo = cafeInfo;
       this.categories.sort((a, b) => a.order - b.order);
       this.products.sort((a, b) => a.order - b.order);
     },
@@ -82,7 +106,8 @@ document.addEventListener("alpine:init", () => {
 
     // Favorites
     loadFavorites() {
-      this.favorites = Utils.getStorage("cafe_favorites", []);
+      const stored = Utils.getStorage("cafe_favorites", []);
+      this.favorites = Array.isArray(stored) ? [...new Set(stored.filter((id) => typeof id === 'string'))] : [];
     },
 
     toggleFavorite(productId) {
@@ -168,9 +193,7 @@ document.addEventListener("alpine:init", () => {
         const desc = this._norm(p.description_fa);
         let score = 0;
         // every term must match somewhere in name or description
-        const allInName = terms.every((t) => name.includes(t));
-        const allInDesc = terms.every((t) => desc.includes(t));
-        if (!allInName && !allInDesc) continue;
+        if (!terms.every((t) => name.includes(t) || desc.includes(t))) continue;
 
         const first = terms[0];
         if (name === first || name.startsWith(first)) score = 3;
@@ -240,6 +263,14 @@ document.addEventListener("alpine:init", () => {
 
     // Scroll-triggered fade-in via IntersectionObserver
     observeFadeIns() {
+      if (window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
+          typeof IntersectionObserver === "undefined") {
+        document.querySelectorAll(".fade-in:not(.visible)").forEach((el) => {
+          el.classList.remove("js-anim");
+          el.classList.add("visible");
+        });
+        return;
+      }
       if (!this._observer) {
         this._observer = new IntersectionObserver(
           (entries) => {
@@ -254,6 +285,7 @@ document.addEventListener("alpine:init", () => {
         );
       }
       document.querySelectorAll(".fade-in:not(.visible)").forEach((el) => {
+        el.classList.add("js-anim");
         this._observer.observe(el);
       });
     },
@@ -262,13 +294,22 @@ document.addEventListener("alpine:init", () => {
     setupNavbar() {
       const navbar = document.querySelector(".navbar");
       if (!navbar) return;
-      window.addEventListener("scroll", () => {
-        if (window.scrollY > 50) {
-          navbar.classList.add("scrolled");
-        } else {
-          navbar.classList.remove("scrolled");
-        }
-      });
+      // rAF throttle: at most one class update per frame, passive listener
+      // so the browser never blocks scrolling on this handler.
+      let ticking = false;
+      window.addEventListener(
+        "scroll",
+        () => {
+          if (ticking) return;
+          ticking = true;
+          requestAnimationFrame(() => {
+            navbar.classList.toggle("scrolled", window.scrollY > 50);
+            ticking = false;
+          });
+        },
+        { passive: true }
+      );
+      navbar.classList.toggle("scrolled", window.scrollY > 50);
     },
 
     // Smooth scroll to section

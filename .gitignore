@@ -1,0 +1,9 @@
+node_modules/
+.qa/
+__pycache__/
+.env
+.env.*
+!.env.example
+templates/qa/*.png
+templates/qa/*.jpg
+templates/qa/*.json

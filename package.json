@@ -1,0 +1,5 @@
+{
+  "name": "ichai-menu", "private": true,
+  "scripts": {"build": "node tools/build.cjs", "test": "node --test tests/*.cjs"},
+  "devDependencies": {"esbuild": "0.25.10", "tailwindcss": "3.4.17"}
+}

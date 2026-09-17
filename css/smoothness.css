@@ -26,9 +26,9 @@
 
 [x-cloak] { display: none !important; }
 
-.menu-card {
-  animation: fadeInUp 0.4s ease-out both;
-  animation-delay: calc(var(--i, 0) * 0.06s);
+/* Card entrances belong to main.css's observed .js-anim states. */
+.menu-card, .menu-card .card-image {
+  will-change: auto;
 }
 
 /* Prevent scroll jank on main content */
@@ -126,6 +126,15 @@
 /* Prevent layout shifts during image load */
 .menu-card {
   contain: layout style;
+}
+
+/* Honor reduced motion across the shared interaction layer. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Smooth scroll snapping for category tabs */

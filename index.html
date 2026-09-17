@@ -4,57 +4,41 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>کافه آی‌چای — منوی دیجیتال</title>
-  <meta name="description" content="منوی دیجیتال کافه آی‌چای — تجربه‌ای ناب از طعم و آرامش">
-  <link rel="icon" type="image/webp" href="logo/no-background-logo-1.webp">
+  <meta name="description" content="منوی کافه آی‌چای؛ قهوه، چای، نوشیدنی‌های سرد و خوراکی‌ها. جستجوی محصولات، مشاهده قیمت‌ها و ثبت و پیگیری سفارش از منوی دیجیتال.">
+  <meta name="theme-color" content="#1c1612">
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="fa_IR">
+  <meta property="og:title" content="کافه آی‌چای — منوی دیجیتال">
+  <meta property="og:description" content="منوی نوشیدنی‌ها و خوراکی‌های کافه آی‌چای؛ جستجو، مشاهده قیمت و پیگیری سفارش.">
+  <meta name="twitter:card" content="summary">
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"WebSite","name":"کافه آی‌چای — منوی دیجیتال","inLanguage":"fa-IR"}</script>
+  <style>[x-cloak]{display:none!important}</style>
+  <link rel="icon" type="image/webp" href="img/logo-128.webp">
 
   <!-- Local Vazirmatn Font -->
   <link rel="stylesheet" href="fonts/fonts.css">
+  <link rel="preload" href="fonts/subset/Vazirmatn-Regular-sub.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="fonts/subset/Vazirmatn-Black-sub.woff2" as="font" type="font/woff2" crossorigin>
 
-  <!-- Tailwind CSS (local) -->
-  <script src="lib/tailwindcss.js"></script>
-  <script>
-    tailwind.config = {
-      darkMode: 'class',
-      theme: {
-        extend: {
-          fontFamily: { fa: ['Vazirmatn', 'Tahoma', 'sans-serif'] },
-          colors: {
-            cafe: {
-              black: '#1c1612',
-              darker: '#2a2018',
-              dark: '#faf6f0',
-              brown: '#e8ddd0',
-              'brown-light': '#d4c4b0',
-              gold: '#b8860b',
-              'gold-light': '#d4a843',
-              yellow: '#e8c547',
-              cream: '#f0e9df',
-              white: '#faf6f0',
-              text: '#3d2e1f',
-              'text-muted': '#7a6b5a',
-            }
-          }
-        }
-      }
-    };
-  </script>
+  <!-- Generated locally; no runtime Tailwind compiler -->
+  <link rel="stylesheet" href="css/tw.min.css?v=6b650d44cfba">
 
   <!-- Alpine.js (local) -->
-  <script defer src="lib/alpine.min.js?v=20260823b"></script>
 
   <!-- Custom CSS -->
-  <link rel="stylesheet" href="css/main.css?v=20260824b">
-  <link rel="stylesheet" href="css/smoothness.css?v=20260824a">
+  <link rel="stylesheet" href="css/main.min.css?v=2de07d3c5382">
+  <link rel="stylesheet" href="css/smoothness.min.css?v=de950496df05">
 </head>
 
-<body class="font-cafe" x-data="cafeMenu" x-cloak>
+<body class="font-cafe" x-data="cafeMenu">
+  <a href="#menu" class="skip-link">رفتن به منو</a>
 
   <!-- ═══════════════ HERO ═══════════════ -->
   <section id="hero" class="hero">
     <div class="hero-bg"></div>
     <div class="hero-overlay"></div>
-    <div class="hero-content">
-      <img src="logo/logo-1.webp" alt="کافه آی‌چای" class="hero-logo">
+    <div class="hero-content" id="heroContent">
+      <img src="img/logo-hero-280.webp" alt="کافه آی‌چای" class="hero-logo" width="280" height="280" decoding="sync" fetchpriority="high">
       <p class="text-sm font-medium tracking-widest mb-4" style="letter-spacing:0.2em;color:var(--cafe-gold-light)">✦ خوش آمدید ✦</p>
       <h1 class="hero-title">
         <span class="gold" x-text="cafeInfo.name">کافه آی‌چای</span>
@@ -66,23 +50,23 @@
          style="background:var(--cafe-gold-light);color:#1c1612"
          @click.prevent="scrollTo('menu')">
         مشاهده منو
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
       </a>
     </div>
     <div class="scroll-indicator">
-      <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--cafe-gold-light)">
+      <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color:var(--cafe-gold-light)">
         <path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
       </svg>
     </div>
   </section>
 
   <!-- ═══════════════ NAVBAR ═══════════════ -->
-  <nav class="navbar">
+  <nav class="navbar" aria-label="ناوبری اصلی">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex items-center justify-between h-16">
         <!-- Logo -->
         <a href="#hero" @click.prevent="scrollTo('hero')" class="flex items-center gap-2">
-          <img src="logo/no-background-logo-1.webp" alt="کافه آی‌چای" class="navbar-logo">
+          <img src="img/logo-128.webp" width="128" height="128" decoding="async" alt="کافه آی‌چای" class="navbar-logo">
           <span class="text-lg font-black tracking-tight" style="color:var(--cafe-gold)" x-text="cafeInfo.name">کافه آی‌چای</span>
         </a>
 
@@ -95,14 +79,14 @@
         </div>
 
         <!-- Search + Favorites + Dark Mode -->
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3" x-cloak x-show="isLoaded">
           <div class="relative hidden sm:block">
-            <svg class="w-4 h-4 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" style="color:var(--cafe-text-muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg aria-hidden="true" class="w-4 h-4 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" style="color:var(--cafe-text-muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
             </svg>
             <input type="text"
                    class="search-input"
-                   placeholder="جستجو در منو..."
+                   placeholder="جستجو در منو..." aria-label="جستجو در منو"
                    x-model.debounce.300ms="searchQuery"
                    @focus="activeCategory='cat-1'">
           </div>
@@ -111,10 +95,10 @@
                   class="relative cursor-pointer"
                   style="color:var(--cafe-text-muted)"
                   title="علاقه‌مندی‌ها">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
             </svg>
-            <span x-show="favoriteCount > 0"
+            <span x-cloak x-show="favoriteCount > 0"
                   x-text="toPersianNum(favoriteCount)"
                   class="absolute -top-2 -left-2 bg-red-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"></span>
           </button>
@@ -124,23 +108,23 @@
                   class="relative cursor-pointer"
                   style="color:var(--cafe-text-muted)"
                   title="سبد خرید">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
             </svg>
-            <span x-show="$store.cart.count > 0"
+            <span x-cloak x-show="$store.cart.count > 0"
                   x-text="$store.cart.count"
                   class="absolute -top-2 -left-2 bg-green-500 text-white text-xs w-5 h-5 flex items-center justify-center rounded-full font-bold"></span>
           </button>
 
           <!-- Dark/Light mode toggle -->
           <button @click="toggleTheme()" class="cursor-pointer" style="color:var(--cafe-text-muted)" :title="darkMode ? 'حالت روشن' : 'حالت تاریک'">
-            <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-            <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg aria-hidden="true" x-cloak x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            <svg aria-hidden="true" x-cloak x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
           </button>
 
           <!-- Mobile menu button -->
-          <button class="md:hidden" style="color:var(--cafe-text-muted)" @click="showMobileMenu = !showMobileMenu">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <button aria-label="باز کردن منوی اصلی" :aria-expanded="showMobileMenu" aria-controls="mobile-navigation" class="md:hidden" style="color:var(--cafe-text-muted)" @click="showMobileMenu = !showMobileMenu">
+            <svg aria-hidden="true" class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16"/>
             </svg>
           </button>
@@ -148,7 +132,7 @@
       </div>
 
       <!-- Mobile Menu -->
-      <div x-show="showMobileMenu"
+      <div id="mobile-navigation" x-cloak x-show="showMobileMenu"
            x-transition:enter="transition ease-out duration-200"
            x-transition:enter-start="opacity-0 -translate-y-2"
            x-transition:enter-end="opacity-100 translate-y-0"
@@ -158,23 +142,23 @@
            class="md:hidden pb-4 mt-2 pt-3" style="border-top:1px solid var(--cafe-border)">
         <!-- Mobile search -->
         <div class="relative mb-3">
-          <svg class="w-4 h-4 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" style="color:var(--cafe-text-muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <svg aria-hidden="true" class="w-4 h-4 absolute top-1/2 right-3 -translate-y-1/2 pointer-events-none" style="color:var(--cafe-text-muted)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
             <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
           </svg>
-          <input type="text" class="search-input w-full" placeholder="جستجو در منو..." x-model.debounce.300ms="searchQuery" @focus="activeCategory='cat-1'">
+          <input type="text" class="search-input w-full" placeholder="جستجو در منو..." aria-label="جستجو در منو" x-model.debounce.300ms="searchQuery" @focus="activeCategory='cat-1'">
         </div>
         <div class="flex flex-col gap-1">
           <button @click="scrollTo('menu')" class="py-2 text-sm font-medium text-right" style="color:var(--cafe-text-muted)">منو</button>
           <button @click="toggleFavPanel(); showMobileMenu=false" class="py-2 text-sm font-medium text-right flex items-center gap-2" style="color:var(--cafe-text-muted)">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             علاقه‌مندی‌ها
           </button>
           <button @click="scrollTo('featured')" class="py-2 text-sm font-medium text-right" style="color:var(--cafe-text-muted)">محبوب‌ها</button>
           <button @click="scrollTo('about')" class="py-2 text-sm font-medium text-right" style="color:var(--cafe-text-muted)">درباره ما</button>
           <button @click="scrollTo('contact')" class="py-2 text-sm font-medium text-right" style="color:var(--cafe-text-muted)">تماس</button>
           <button @click="toggleTheme()" class="py-2 text-sm font-medium text-right flex items-center gap-2" style="color:var(--cafe-text-muted)">
-            <svg x-show="!darkMode" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
-            <svg x-show="darkMode" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+            <svg aria-hidden="true" x-cloak x-show="!darkMode" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+            <svg aria-hidden="true" x-cloak x-show="darkMode" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
             <span x-text="darkMode ? 'حالت روشن' : 'حالت تاریک'"></span>
           </button>
         </div>
@@ -182,6 +166,7 @@
     </div>
   </nav>
 
+  <main id="main-content">
   <!-- ═══════════════ FEATURED PRODUCTS ═══════════════ -->
   <section id="featured" class="py-16 sm:py-24" style="background:var(--cafe-bg)">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -192,7 +177,7 @@
       </div>
 
       <!-- Skeleton loaders -->
-      <div x-show="!isLoaded" class="menu-grid">
+      <div x-cloak x-show="!isLoaded" class="menu-grid">
         <template x-for="i in 4">
           <div class="menu-card">
             <div class="skeleton" style="aspect-ratio:4/3"></div>
@@ -206,12 +191,12 @@
       </div>
 
       <!-- Featured grid -->
-      <div x-show="isLoaded" class="menu-grid stagger-children">
+      <div x-cloak x-show="isLoaded" class="menu-grid stagger-children">
         <template x-for="product in featuredProducts" :key="product.id">
           <div class="menu-card fade-in">
             <div class="card-image-wrapper">
               <span class="badge-featured">محبوب</span>
-              <img :src="product.image_url" :alt="product.name_fa" class="card-image" loading="lazy">
+              <img :src="menuImage(product.image_url)" @error="fallbackMenuImage($el, product.image_url)" decoding="async" :alt="product.name_fa" class="card-image" loading="lazy" width="640" height="480">
             </div>
             <div class="card-body">
               <h3 class="card-name" x-text="product.name_fa"></h3>
@@ -226,7 +211,7 @@
                           :class="{ 'active': $store.cart.inCart(product.id) }"
                           @click="$store.cart.add(product)"
                           title="افزودن به سفارش">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>
                   </button>
@@ -234,7 +219,7 @@
                           :class="{ 'active': isFavorite(product.id) }"
                           @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
                           title="افزودن به علاقه‌مندی‌ها">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
                   </button>
@@ -248,7 +233,7 @@
   </section>
 
   <!-- ═══════════════ FULL MENU ═══════════════ -->
-  <section id="menu" class="py-16 sm:py-24" style="background:var(--cafe-card-bg)">
+  <section tabindex="-1" id="menu" class="py-16 sm:py-24" style="background:var(--cafe-card-bg)">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="fade-in">
         <h2 class="section-title">منوی کامل</h2>
@@ -256,11 +241,17 @@
         <p class="section-subtitle">همه چیزهایی که در کافه آی‌چای سرو می‌شود</p>
       </div>
 
+      <div id="static-menu" class="static-menu" x-show="!isLoaded">
+        <h3>نوشیدنی‌ها و خوراکی‌های آی‌چای</h3>
+        <p>از قهوه و اسپرسو تا چای و دمنوش، نوشیدنی‌های سرد، کیک و میان‌وعده؛ دسته‌بندی‌های منو برای پیدا کردن انتخاب شما در دسترس‌اند.</p>
+        <p>برای قیمت و موجودی روز از منوی آنلاین استفاده کنید یا از کارکنان کافه بپرسید. در صورت اختلال اتصال، ممکن است قیمت‌های ذخیره‌شده به‌روز نباشند.</p>
+        <a href="#contact">اطلاعات تماس کافه</a>
+      </div>
       <!-- Category chips -->
-      <div class="chip-container mb-8">
+      <div class="chip-container mb-8" aria-label="دسته‌بندی منو">
         <template x-for="cat in categories" :key="cat.id">
           <button class="chip"
-                  :class="{ 'active': activeCategory === cat.id }"
+                  :class="{ 'active': activeCategory === cat.id }" :aria-pressed="activeCategory === cat.id"
                   @click="setCategory(cat.id)">
             <span x-text="cat.icon" class="me-1"></span>
             <span x-text="cat.name_fa"></span>
@@ -269,12 +260,12 @@
       </div>
 
       <!-- Search count / info -->
-      <div x-show="searchQuery.trim()" class="text-center mb-6 text-sm" style="color:var(--cafe-text-muted)">
+      <div x-cloak x-show="searchQuery.trim()" class="text-center mb-6 text-sm" style="color:var(--cafe-text-muted)">
         <span x-text="toPersianNum(filteredProducts.length)"></span> نتیجه برای «<span x-text="searchQuery" style="color:var(--cafe-gold)"></span>»
       </div>
 
       <!-- Skeleton loaders -->
-      <div x-show="!isLoaded" class="menu-grid">
+      <div x-cloak x-show="!isLoaded" class="menu-grid">
         <template x-for="i in 8">
           <div class="menu-card">
             <div class="skeleton" style="aspect-ratio:4/3"></div>
@@ -288,12 +279,12 @@
       </div>
 
       <!-- Menu grid -->
-      <div x-show="isLoaded" class="menu-grid stagger-children">
+      <div x-cloak x-show="isLoaded" class="menu-grid stagger-children">
         <template x-for="product in filteredProducts" :key="product.id">
           <div class="menu-card fade-in">
             <div class="card-image-wrapper">
-              <span x-show="product.is_featured" class="badge-featured">محبوب</span>
-              <img :src="product.image_url" :alt="product.name_fa" class="card-image" loading="lazy">
+              <span x-cloak x-show="product.is_featured" class="badge-featured">محبوب</span>
+              <img :src="menuImage(product.image_url)" @error="fallbackMenuImage($el, product.image_url)" decoding="async" :alt="product.name_fa" class="card-image" loading="lazy" width="640" height="480">
             </div>
             <div class="card-body">
               <h3 class="card-name" x-text="product.name_fa"></h3>
@@ -308,7 +299,7 @@
                           :class="{ 'active': $store.cart.inCart(product.id) }"
                           @click="$store.cart.add(product)"
                           title="افزودن به سفارش">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/>
                     </svg>
                   </button>
@@ -316,7 +307,7 @@
                           :class="{ 'active': isFavorite(product.id) }"
                           @click="toggleFavorite(product.id); $el.classList.add('pop'); setTimeout(()=>$el.classList.remove('pop'), 300)"
                           title="علاقه‌مندی">
-                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
                     </svg>
                   </button>
@@ -328,8 +319,8 @@
       </div>
 
       <!-- Empty state -->
-      <div x-show="isLoaded && filteredProducts.length === 0" class="empty-state">
-        <svg class="w-16 h-16 mx-auto" style="color:var(--cafe-text-muted)" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+      <div x-cloak x-show="isLoaded && filteredProducts.length === 0" class="empty-state">
+        <svg aria-hidden="true" class="w-16 h-16 mx-auto" style="color:var(--cafe-text-muted)" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
           <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
         </svg>
         <h3 class="text-lg font-bold mt-4" style="color:var(--cafe-black)">محصولی یافت نشد</h3>
@@ -352,9 +343,9 @@
       <div class="fade-in mt-8">
         <div class="rounded-2xl p-8 sm:p-12 text-center" style="background:var(--cafe-card-bg);border:1px solid var(--cafe-border)">
           <img src="logo/logo-1.webp" alt="کافه آی‌چای" style="height:80px;width:80px;border-radius:50%;object-fit:cover;margin:0 auto 1.5rem;display:block">
-          <p class="text-lg sm:text-xl leading-relaxed font-light" style="color:var(--cafe-text)" x-text="cafeInfo.about_fa"></p>
+          <p class="text-lg sm:text-xl leading-relaxed font-light" style="color:var(--cafe-text)" x-text="cafeInfo.about_fa">آی‌چای؛ فرصتی برای مکث، انتخاب نوشیدنی دلخواه و دورهمی. در این منوی دیجیتال می‌توانید نوشیدنی‌ها و خوراکی‌ها را جستجو کنید و انتخاب‌های محبوب خود را نگه دارید.</p>
           <div class="mt-8 flex items-center justify-center gap-2" style="color:var(--cafe-gold)">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
               <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
             </svg>
@@ -375,25 +366,25 @@
       </div>
 
       <div class="fade-in">
-        <div class="feedback-form">
+        <div class="feedback-form" x-cloak x-show="isLoaded">
           <!-- Success message -->
-          <div x-show="feedbackSuccess" x-transition class="feedback-success mb-4">
+          <div x-cloak x-show="feedbackSuccess" x-transition class="feedback-success mb-4" role="status">
             با تشکر! نظر شما با موفقیت ارسال شد.
           </div>
 
           <!-- Error message -->
-          <div x-show="feedbackError" x-transition class="feedback-error mb-4" x-text="feedbackError"></div>
+          <div x-cloak x-show="feedbackError" x-transition class="feedback-error mb-4" role="alert" x-text="feedbackError"></div>
 
           <div class="mb-4">
             <input type="text"
                    class="feedback-input"
-                   placeholder="نام شما (اختیاری)"
+                   placeholder="نام شما (اختیاری)" aria-label="نام شما (اختیاری)" autocomplete="name"
                    x-model="feedbackForm.name"
                    maxlength="100">
           </div>
 
           <div class="mb-4">
-            <textarea class="feedback-textarea"
+            <textarea aria-label="پیام شما" class="feedback-textarea"
                       placeholder="پیام خود را بنویسید..."
                       x-model="feedbackForm.message"
                       maxlength="2000"></textarea>
@@ -402,36 +393,37 @@
           <button class="feedback-submit"
                   @click="submitFeedback()"
                   :disabled="feedbackSending">
-            <span x-show="!feedbackSending">ارسال پیام</span>
-            <span x-show="feedbackSending">در حال ارسال...</span>
+            <span x-cloak x-show="!feedbackSending">ارسال پیام</span>
+            <span x-cloak x-show="feedbackSending">در حال ارسال...</span>
           </button>
         </div>
       </div>
     </div>
   </section>
 
+  </main>
   <!-- ═══════════════ FOOTER ═══════════════ -->
   <footer id="contact" class="site-footer py-12 sm:py-16">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
         <!-- Brand -->
         <div>
-          <img src="logo/no-background-logo-1.webp" alt="کافه آی‌چای" class="footer-logo">
+          <img src="img/logo-128.webp" width="128" height="128" decoding="async" alt="کافه آی‌چای" class="footer-logo">
           <h3 class="text-xl font-black mb-3" style="color:var(--cafe-gold)" x-text="cafeInfo.name">کافه آی‌چای</h3>
           <p class="text-sm leading-relaxed" style="color:var(--cafe-text-muted)" x-text="cafeInfo.tagline"></p>
           <div class="flex gap-3 mt-4">
-            <a :href="'https://instagram.com/' + cafeInfo.instagram?.replace('@','')" target="_blank" class="footer-link" title="اینستاگرام">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <a :href="'https://instagram.com/' + cafeInfo.instagram?.replace('@','')" target="_blank" rel="noopener noreferrer" class="footer-link" title="اینستاگرام">
+              <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
               </svg>
             </a>
-            <a :href="'https://t.me/' + cafeInfo.telegram?.replace('@','')" target="_blank" class="footer-link" title="تلگرام">
-              <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+            <a :href="'https://t.me/' + cafeInfo.telegram?.replace('@','')" target="_blank" rel="noopener noreferrer" class="footer-link" title="تلگرام">
+              <svg aria-hidden="true" class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.479.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
               </svg>
             </a>
             <a :href="'tel:' + cafeInfo.phone" class="footer-link" title="تماس">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
               </svg>
             </a>
@@ -453,7 +445,7 @@
         <div>
           <h4 class="font-bold mb-4" style="color:var(--cafe-gold)">ساعات کاری</h4>
           <div class="flex items-start gap-2 text-sm" style="color:var(--cafe-text-muted)">
-            <svg class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--cafe-gold)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg aria-hidden="true" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--cafe-gold)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/>
             </svg>
             <span x-text="cafeInfo.hours_fa">هر روز از ساعت ۸ صبح تا ۱۲ شب</span>
@@ -465,13 +457,13 @@
           <h4 class="font-bold mb-4" style="color:var(--cafe-gold)">تماس با ما</h4>
           <div class="space-y-3 text-sm" style="color:var(--cafe-text-muted)">
             <div class="flex items-center gap-2">
-              <svg class="w-4 h-4 flex-shrink-0" style="color:var(--cafe-gold)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg aria-hidden="true" class="w-4 h-4 flex-shrink-0" style="color:var(--cafe-gold)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
               </svg>
               <span x-text="cafeInfo.phone">۰۲۱-۸۸۷۷۶۶۵۵</span>
             </div>
             <div class="flex items-start gap-2">
-              <svg class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--cafe-gold)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg aria-hidden="true" class="w-4 h-4 mt-0.5 flex-shrink-0" style="color:var(--cafe-gold)" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
               </svg>
@@ -487,37 +479,37 @@
           تمامی حقوق برای <span style="color:var(--cafe-gold)" x-text="cafeInfo.name"></span> محفوظ است.
         </p>
         <p class="text-xs" style="color:var(--cafe-text-muted)">
-          <a href="https://amirlwf.ir" target="_blank" class="footer-link" style="color:var(--cafe-gold)">طراحی شده توسط amirlwf</a>
+          <a href="https://amirlwf.ir" target="_blank" rel="noopener noreferrer" class="footer-link" style="color:var(--cafe-gold)">طراحی شده توسط amirlwf</a>
         </p>
       </div>
     </div>
   </footer>
 
   <!-- ═══════════════ CART PANEL ═══════════════ -->
-  <div x-show="$store.cart.showPanel" x-transition.opacity class="fav-panel-overlay" @click="$store.cart.showPanel=false"></div>
-  <div x-show="$store.cart.showPanel"
+  <div x-cloak x-show="$store.cart.showPanel" x-transition.opacity class="fav-panel-overlay" @click="$store.cart.showPanel=false"></div>
+  <div x-cloak x-show="$store.cart.showPanel"
        x-transition:enter="transition ease-out duration-300"
        x-transition:enter-start="-translate-x-full"
        x-transition:enter-end="translate-x-0"
        x-transition:leave="transition ease-in duration-200"
        x-transition:leave-start="translate-x-0"
        x-transition:leave-end="-translate-x-full"
-       class="fav-panel">
+       class="fav-panel" role="dialog" aria-modal="true" aria-label="انتخاب‌های من" tabindex="-1">
     <div class="fav-panel-header">
       <h3 x-text="$store.cart.activeTab === 'cart' ? 'سبد خرید' : 'پیگیری سفارش'"></h3>
-      <button class="fav-panel-close" @click="$store.cart.showPanel=false">✕</button>
+      <button class="fav-panel-close" aria-label="بستن" data-dialog-close @click="$store.cart.showPanel=false">✕</button>
     </div>
 
     <!-- Tabs -->
     <div class="cart-tabs">
       <button class="cart-tab" :class="{'active': $store.cart.activeTab==='cart'}" @click="$store.cart.activeTab='cart'; $store.cart.refreshTracking()">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/></svg>
         سبد خرید
       </button>
       <button class="cart-tab" :class="{'active': $store.cart.activeTab==='track'}" @click="$store.cart.activeTab='track'; $store.cart.refreshTracking()">
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
         پیگیری سفارش
-        <span x-show="$store.cart.myOrders.filter(o => o.status === 'new' || o.status === 'preparing').length > 0"
+        <span x-cloak x-show="$store.cart.myOrders.filter(o => o.status === 'new' || o.status === 'preparing').length > 0"
               class="inline-flex items-center justify-center w-4 h-4 text-[0.55rem] font-black rounded-full"
               style="background:#28a745;color:#fff;margin-right:-2px;margin-left:4px"
               x-text="$store.cart.myOrders.filter(o => o.status === 'new' || o.status === 'preparing').length"></span>
@@ -527,10 +519,10 @@
     <div class="fav-panel-body">
 
       <!-- ══ CART TAB ══ -->
-      <div x-show="$store.cart.activeTab === 'cart'">
+      <div x-cloak x-show="$store.cart.activeTab === 'cart'">
         <!-- Empty cart -->
-        <div x-show="$store.cart.items.length === 0" class="fav-panel-empty">
-          <svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+        <div x-cloak x-show="$store.cart.items.length === 0" class="fav-panel-empty">
+          <svg aria-hidden="true" class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 100 4 2 2 0 000-4z"/>
           </svg>
           <h4>سبد خرید خالی است</h4>
@@ -540,19 +532,19 @@
         <!-- Cart items -->
         <template x-for="item in $store.cart.items" :key="item.id">
           <div class="fav-panel-item">
-            <img :src="item.image_url" :alt="item.name_fa" class="fav-panel-item-img" loading="lazy">
+            <img :src="menuImage(item.image_url)" @error="fallbackMenuImage($el, item.image_url)" decoding="async" :alt="item.name_fa" class="fav-panel-item-img" loading="lazy" width="64" height="64">
             <div class="fav-panel-item-info">
               <div class="fav-panel-item-name" x-text="item.name_fa"></div>
               <div class="fav-panel-item-price" x-text="formatPrice(item.price)"></div>
               <!-- Quantity controls -->
               <div class="flex items-center gap-2 mt-1">
-                <button class="qty-btn" @click="$store.cart.updateQty(item.id, -1)">−</button>
+                <button class="qty-btn" aria-label="کاهش تعداد" @click="$store.cart.updateQty(item.id, -1)">−</button>
                 <span class="text-sm font-bold" x-text="$store.cart.qty(item.id)" style="color:var(--cafe-text);min-width:20px;text-align:center"></span>
-                <button class="qty-btn" @click="$store.cart.updateQty(item.id, 1)">+</button>
+                <button class="qty-btn" aria-label="افزایش تعداد" @click="$store.cart.updateQty(item.id, 1)">+</button>
               </div>
             </div>
             <button class="fav-panel-item-remove" @click="$store.cart.remove(item.id)" title="حذف">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
               </svg>
             </button>
@@ -560,7 +552,7 @@
         </template>
 
         <!-- Order form (when cart has items) -->
-        <div x-show="$store.cart.items.length > 0" class="cart-order-form">
+        <div x-cloak x-show="$store.cart.items.length > 0" class="cart-order-form">
           <div class="cart-total-row">
             <span class="text-sm font-bold" style="color:var(--cafe-text-muted)">جمع سفارش:</span>
             <span class="text-lg font-black" style="color:var(--cafe-gold)" x-text="formatPrice($store.cart.total)"></span>
@@ -569,27 +561,27 @@
             <input type="text" class="feedback-input" placeholder="شماره میز (اختیاری)" x-model="$store.cart.tableNumber" maxlength="10">
           </div>
           <div class="mb-3">
-            <input type="text" class="feedback-input" placeholder="توضیحات (اختیاری)" x-model="$store.cart.notes" maxlength="300">
+            <input type="text" class="feedback-input" placeholder="توضیحات (اختیاری)" aria-label="توضیحات سفارش (اختیاری)" x-model="$store.cart.notes" maxlength="300">
           </div>
-          <p x-show="$store.cart.orderError" class="text-xs mb-2" style="color:var(--admin-red)" x-text="$store.cart.orderError"></p>
+          <p x-cloak x-show="$store.cart.orderError" class="text-xs mb-2" role="alert" style="color:#b42318" x-text="$store.cart.orderError"></p>
           <button class="feedback-submit" @click="$store.cart.submit()" :disabled="$store.cart.isSubmitting">
-            <span x-show="!$store.cart.isSubmitting">ثبت سفارش</span>
-            <span x-show="$store.cart.isSubmitting">در حال ثبت...</span>
+            <span x-cloak x-show="!$store.cart.isSubmitting">ثبت سفارش</span>
+            <span x-cloak x-show="$store.cart.isSubmitting">در حال ثبت...</span>
           </button>
         </div>
       </div>
 
       <!-- ══ TRACKING TAB ══ -->
-      <div x-show="$store.cart.activeTab === 'track'">
+      <div x-cloak x-show="$store.cart.activeTab === 'track'">
         <!-- Live indicator -->
-        <div x-show="$store.cart.myOrders.length > 0 && $store.cart._trackerStarted"
+        <div x-cloak x-show="$store.cart.myOrders.length > 0 && $store.cart._trackerStarted"
              class="flex items-center gap-2 mb-3 px-3 py-1.5 rounded-full text-xs font-bold"
              style="background:rgba(40,167,69,0.08);color:#28a745;border:1px solid rgba(40,167,69,0.2)">
           <span class="inline-block w-2 h-2 rounded-full animate-pulse" style="background:#28a745"></span>
           پیگیری لایو فعال
         </div>
-        <div x-show="$store.cart.myOrders.length === 0" class="fav-panel-empty">
-          <svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
+        <div x-cloak x-show="$store.cart.myOrders.length === 0" class="fav-panel-empty">
+          <svg aria-hidden="true" class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
           <h4>سفارشی ثبت نشده</h4>
           <p>پس از ثبت سفارش، وضعیت آن را اینجا ببینید</p>
         </div>
@@ -599,18 +591,18 @@
               <span class="font-bold text-sm" style="color:var(--cafe-text)" x-text="order.order_number"></span>
               <div class="flex items-center gap-1.5">
                 <span class="track-status-badge" :style="'background:' + $store.cart.getStatusColor(order.status)" x-text="$store.cart.getStatusLabel(order.status)"></span>
-                <span x-show="order.status !== 'delivered' && order.status !== 'cancelled'" class="inline-block w-1.5 h-1.5 rounded-full" style="background:#28a745;animation:livePulse 2s infinite"></span>
+                <span x-cloak x-show="order.status !== 'delivered' && order.status !== 'cancelled'" class="inline-block w-1.5 h-1.5 rounded-full" style="background:#28a745;animation:livePulse 2s infinite"></span>
               </div>
             </div>
             <div class="text-xs mt-1" style="color:var(--cafe-text-muted)">
               <span x-text="formatPrice(order.total_price)"></span> · <span x-text="order.item_count + ' آیتم'"></span>
             </div>
-            <div x-show="order.table_number" class="text-xs mt-1" style="color:var(--cafe-text-muted)">
+            <div x-cloak x-show="order.table_number" class="text-xs mt-1" style="color:var(--cafe-text-muted)">
               میز: <span x-text="order.table_number"></span>
             </div>
             <!-- Cancelled banner (red) — shown INSTEAD of the step tracker -->
-            <div x-show="order.status==='cancelled'" class="track-cancelled-banner">
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+            <div x-cloak x-show="order.status==='cancelled'" class="track-cancelled-banner">
+              <svg aria-hidden="true" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
               <div>
                 <div class="font-black text-sm">سفارش شما لغو شد</div>
                 <div class="text-xs mt-1">این سفارش توسط کافه لغو شده. در صورت اعتراض با کافه هماهنگ کنید.</div>
@@ -647,46 +639,46 @@
   </div>
 
   <!-- ═══════════════ ORDER SUCCESS MODAL (animated green) ═══════════════ -->
-  <div x-show="$store.cart.orderSuccess" class="modal-overlay" x-transition.opacity @click.self="$store.cart.closeSuccess()" style="z-index:600">
-    <div class="modal-box" style="max-width:420px;text-align:center;overflow:hidden;position:relative" @click.stop>
+  <div x-cloak x-show="$store.cart.orderSuccess" class="modal-overlay" x-transition.opacity @click.self="$store.cart.closeSuccess()" style="z-index:600">
+    <div class="modal-box" role="dialog" aria-modal="true" aria-label="نتیجه ثبت سفارش" tabindex="-1" style="max-width:420px;text-align:center;overflow:hidden;position:relative" @click.stop>
       <!-- confetti pieces -->
       <template x-for="i in 14" :key="'cf'+i">
         <span class="order-confetti" :style="'--cx:' + ((i * 37) % 100) + ';--cd:' + (0.15 + (i % 5) * 0.12) + 's'"></span>
       </template>
       <div class="success-ring">
-        <svg viewBox="0 0 52 52" class="success-checkmark">
+        <svg aria-hidden="true" viewBox="0 0 52 52" class="success-checkmark">
           <circle cx="26" cy="26" r="24" fill="none"/>
           <path fill="none" d="M14 27l8 8 16-17"/>
         </svg>
       </div>
       <h2 class="text-xl font-black mb-2" style="color:#28a745">سفارش شما ثبت شد! 🎉</h2>
-      <p class="text-sm mb-3" style="color:var(--cafe-text-muted)">کافه در حال آماده‌سازی سفارش شماست</p>
+      <p class="text-sm mb-3" style="color:var(--cafe-text-muted)">وضعیت سفارش را از بخش پیگیری دنبال کنید</p>
       <div class="order-number-pill" x-text="$store.cart.orderSuccess?.order_number"></div>
       <p class="text-sm mt-3 mb-6" style="color:var(--cafe-text-muted)">
         مبلغ: <span style="color:var(--cafe-gold);font-weight:800" x-text="formatPrice($store.cart.orderSuccess?.total_price)"></span>
       </p>
-      <button class="feedback-submit" @click="$store.cart.closeSuccess()" style="max-width:280px;margin:0 auto">
+      <button class="feedback-submit" data-dialog-close @click="$store.cart.closeSuccess()" style="max-width:280px;margin:0 auto">
         پیگیری سفارش
       </button>
     </div>
   </div>
-  <div x-show="showFavPanel" x-transition.opacity class="fav-panel-overlay" @click="showFavPanel=false"></div>
-  <div x-show="showFavPanel"
+  <div x-cloak x-show="showFavPanel" x-transition.opacity class="fav-panel-overlay" @click="showFavPanel=false"></div>
+  <div x-cloak x-show="showFavPanel"
        x-transition:enter="transition ease-out duration-300"
        x-transition:enter-start="-translate-x-full"
        x-transition:enter-end="translate-x-0"
        x-transition:leave="transition ease-in duration-200"
        x-transition:leave-start="translate-x-0"
        x-transition:leave-end="-translate-x-full"
-       class="fav-panel">
+       class="fav-panel" role="dialog" aria-modal="true" aria-label="انتخاب‌های من" tabindex="-1">
     <div class="fav-panel-header">
       <h3>علاقه‌مندی‌ها</h3>
-      <button class="fav-panel-close" @click="showFavPanel=false">✕</button>
+      <button class="fav-panel-close" aria-label="بستن" data-dialog-close @click="showFavPanel=false">✕</button>
     </div>
     <div class="fav-panel-body">
       <!-- Empty state -->
-      <div x-show="favoriteProducts.length === 0" class="fav-panel-empty">
-        <svg class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
+      <div x-cloak x-show="favoriteProducts.length === 0" class="fav-panel-empty">
+        <svg aria-hidden="true" class="w-16 h-16" fill="none" stroke="currentColor" stroke-width="1" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
         </svg>
         <h4>هنوز محصولی اضافه نشده</h4>
@@ -695,7 +687,7 @@
       <!-- Favorites list -->
       <template x-for="product in favoriteProducts" :key="product.id">
         <div class="fav-panel-item">
-          <img :src="product.image_url" :alt="product.name_fa" class="fav-panel-item-img" loading="lazy">
+          <img :src="menuImage(product.image_url)" @error="fallbackMenuImage($el, product.image_url)" decoding="async" :alt="product.name_fa" class="fav-panel-item-img" loading="lazy" width="64" height="64">
           <div class="fav-panel-item-info">
             <div class="fav-panel-item-name" x-text="product.name_fa"></div>
             <div class="fav-panel-item-price" x-text="formatPrice(product.price)"></div>
@@ -703,7 +695,7 @@
           <button class="fav-panel-item-remove"
                   @click="toggleFavorite(product.id)"
                   title="حذف از علاقه‌مندی‌ها">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <svg aria-hidden="true" class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
             </svg>
           </button>
@@ -712,13 +704,18 @@
     </div>
   </div>
 
+  <noscript><p class="offline-note">برای سفارش و پیگیری آنلاین، جاوااسکریپت مرورگر را فعال کنید.</p></noscript>
   <!-- Scripts -->
-  <script src="lib/supabase.min.js"></script>
-  <script src="js/config.js?v=20260823b"></script>
-  <script src="js/utils.js?v=20260823b"></script>
-  <script src="js/data.js?v=20260823b"></script>
-  <script src="js/supabase-client.js?v=20260823g"></script>
-  <script src="js/cart.js?v=20260824a"></script>
-  <script src="js/app.js?v=20260824a"></script>
+  <script defer src="lib/supabase.min.js"></script>
+  <script defer src="js/config.min.js?v=8401f979410c"></script>
+  <script defer src="js/img-map.min.js?v=431a495d3fcd"></script>
+  <script defer src="js/images.min.js?v=30cb818a12fd"></script>
+  <script defer src="js/utils.min.js?v=639101ed10c5"></script>
+  <script defer src="js/data.min.js?v=c97c3c49c705"></script>
+  <script defer src="js/supabase-client.min.js?v=4dbd85612acc"></script>
+  <script defer src="js/cart.min.js?v=d00301d9fee8"></script>
+  <script defer src="js/app.min.js?v=d8c5f7685a1a"></script>
+  <script defer src="js/accessibility.min.js?v=cc83d8f12a55"></script>
+  <script defer src="lib/alpine.min.js?v=20260823b"></script>
 </body>
 </html>

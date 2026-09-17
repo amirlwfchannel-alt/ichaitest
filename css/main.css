@@ -4,6 +4,18 @@
  * High-contrast text for excellent readability.
  */
 
+/* Keyboard navigation and resilient static shell */
+.skip-link { position:fixed; top:8px; right:8px; z-index:9999; padding:12px 20px; background:#1c1612; color:#fff; transform:translateY(-150%); }
+.skip-link:focus { transform:none; }
+:focus-visible { outline:3px solid #926408; outline-offset:4px; }
+.static-menu,.offline-note { max-width:760px; margin:24px auto; padding:24px; line-height:2; }
+.static-menu h3 { font-size:1.4rem; font-weight:800; }
+.static-menu a { text-decoration:underline; }
+section[id] { scroll-margin-top:80px; }
+.navbar button,.qty-btn,.cart-add-btn,.fav-btn,.fav-panel-close,.fav-panel-item-remove { min-width:44px; min-height:44px; }
+.feedback-input,.feedback-textarea,.search-input { font-size:16px; }
+@media (prefers-reduced-motion:reduce) { html { scroll-behavior:auto!important; } *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; } }
+
 /* ── CSS Custom Properties (Light Mode) ── */
 :root {
   --cafe-black: #1c1612;
@@ -135,7 +147,7 @@ body {
 .hero-bg {
   position: absolute;
   inset: 0;
-  background: url("https://images.unsplash.com/photo-1447933601403-0c6688de566e?w=1600&q=80")
+  background: url("../img/hero-bg.webp")
     center/cover no-repeat;
   transform: scale(1.05);
   transition: transform 8s ease-out;
@@ -157,11 +169,36 @@ body {
   );
 }
 
+/* Visible by default; JavaScript opts into the entrance animation. */
 .hero-content {
   position: relative;
   z-index: 2;
   padding: 2rem;
   max-width: 700px;
+  opacity: 1;
+  transform: none;
+}
+
+.hero-content.hero-in-start {
+  opacity: 0;
+  transform: translateY(28px) scale(0.98);
+  will-change: opacity, transform;
+}
+
+.hero-content.hero-in-end {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-content.hero-in-start,
+  .hero-content.hero-in-end {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
 }
 
 .hero-logo {
@@ -222,8 +259,8 @@ body {
   position: sticky;
   top: 0;
   z-index: 100;
-  backdrop-filter: blur(20px) saturate(1.5);
-  -webkit-backdrop-filter: blur(20px) saturate(1.5);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   background: var(--cafe-navbar-bg);
   border-bottom: 1px solid var(--cafe-border);
   transition: var(--transition-fast);
@@ -231,6 +268,10 @@ body {
 
 .navbar.scrolled {
   box-shadow: 0 2px 20px rgba(45, 33, 23, 0.1);
+  /* Avoid filtering the moving content beneath the sticky navbar. */
+  background: var(--cafe-bg);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .navbar-logo {
@@ -330,6 +371,9 @@ body {
   overflow: hidden;
   transition: var(--transition-smooth);
   position: relative;
+  /* Skip rendering off-screen card contents; retain a size estimate. */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 420px;
 }
 
 .menu-card:hover {
@@ -526,15 +570,39 @@ body {
 }
 
 /* ── Animations: Fade-in on scroll ── */
+/* Base state is visible so content shows without JavaScript; the fade-in
+   animation is enabled by JS adding .js-anim right before observing. */
 .fade-in {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.6s ease, transform 0.6s ease;
+  opacity: 1;
+  transform: none;
 }
 
-.fade-in.visible {
+.fade-in.js-anim {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.45s cubic-bezier(0.4, 0, 0.2, 1), transform 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: opacity, transform;
+}
+
+.fade-in.js-anim.visible {
   opacity: 1;
   transform: translateY(0);
+  will-change: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .fade-in.js-anim {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+  .scroll-indicator,
+  .skeleton::after {
+    animation: none;
+  }
+  html {
+    scroll-behavior: auto;
+  }
 }
 
 /* Stagger children */

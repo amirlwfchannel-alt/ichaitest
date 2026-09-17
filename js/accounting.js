@@ -14,6 +14,7 @@ const AccountingEngine = {
   // ══════════ Data Loading ══════════
 
   async loadData(period, customFrom, customTo) {
+    const request = this._loadRequest = (this._loadRequest || 0) + 1;
     this.period = period || "30days";
     this.customFrom = customFrom || "";
     this.customTo = customTo || "";
@@ -31,16 +32,19 @@ const AccountingEngine = {
       since = start.toISOString();
       until = new Date(start.getTime() + 86400000 - 1).toISOString();
     } else if (this.period !== "all") {
-      since = Utils.getPeriodStart(this.period);
+      const range = Utils.getPeriodStart(this.period);
+      since = typeof range === "object" && range ? range.from : range;
+      until = typeof range === "object" && range ? range.to : null;
     }
 
     // Fetch orders
     const options = { since, until };
-    this.orders = await SupaDB.fetchOrders(options);
-    // Fetch items (same window) — must match the orders window exactly,
-    // otherwise KPI totals and the product table disagree.
-    this.items = await SupaDB.fetchAccountingData(since, until);
-
+    const orders = await SupaDB.fetchOrders(options);
+    // Publish only a complete, current snapshot.
+    const items = await SupaDB.fetchAccountingData(since, until);
+    if (request !== this._loadRequest) return null;
+    this.orders = orders;
+    this.items = items;
     return this;
   },
 
@@ -48,7 +52,7 @@ const AccountingEngine = {
 
   getKPIs() {
     const activeOrders = this.orders.filter((o) => o.status !== "cancelled");
-    const totalRevenue = activeOrders.reduce((s, o) => s + o.total_price, 0);
+    const totalRevenue = activeOrders.reduce((s, o) => s + Number(o.total_price || 0), 0);
     const totalOrders = activeOrders.length;
     const avgOrder = totalOrders > 0 ? Math.round(totalRevenue / totalOrders) : 0;
 
@@ -58,8 +62,8 @@ const AccountingEngine = {
       if (item.order_status === "cancelled") continue;
       const key = item.product_name_fa;
       if (!productMap[key]) productMap[key] = { name: key, qty: 0, revenue: 0 };
-      productMap[key].qty += item.quantity;
-      productMap[key].revenue += item.subtotal;
+      productMap[key].qty += Number(item.quantity || 0);
+      productMap[key].revenue += Number(item.subtotal || 0);
     }
     const topProduct = Object.values(productMap).sort((a, b) => b.qty - a.qty)[0] || null;
     if (topProduct) {
@@ -84,12 +88,13 @@ const AccountingEngine = {
     const daily = {};
     for (const o of active) {
       // Jalali day label in Iran time (e.g. «۱۴۰۵/۰۶/۰۱»)
-      const day = Utils.formatDate(o.created_at).split("،")[0].trim();
-      daily[day] = (daily[day] || 0) + o.total_price;
+      const day = Utils.startOfTehranDay(o.created_at).toISOString();
+      // Group by an instant, not locale-dependent date/time punctuation.
+      daily[day] = (daily[day] || 0) + Number(o.total_price || 0);
     }
     const sorted = Object.entries(daily).sort((a, b) => a[0].localeCompare(b[0]));
     return {
-      labels: sorted.map((d) => d[0]),
+      labels: sorted.map((d) => Utils.formatDateShort(d[0])),
       values: sorted.map((d) => d[1]),
     };
   },
@@ -119,8 +124,8 @@ const AccountingEngine = {
           revenue: 0,
         };
       }
-      productMap[key].qty += item.quantity;
-      productMap[key].revenue += item.subtotal;
+      productMap[key].qty += Number(item.quantity || 0);
+      productMap[key].revenue += Number(item.subtotal || 0);
     }
     return Object.values(productMap)
       .sort((a, b) => b.qty - a.qty)
@@ -159,8 +164,8 @@ const AccountingEngine = {
           revenue: 0,
         };
       }
-      productMap[key].qty += item.quantity;
-      productMap[key].revenue += item.subtotal;
+      productMap[key].qty += Number(item.quantity || 0);
+      productMap[key].revenue += Number(item.subtotal || 0);
     }
     const totalRev = Object.values(productMap).reduce((s, p) => s + p.revenue, 0);
     return Object.values(productMap)

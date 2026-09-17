@@ -1,0 +1,197 @@
+/* AUTO-GENERATED: original Supabase Storage URL -> optimized local asset */
+const IMG_MAP = {
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800607959-h2hvth.webp": "img/w640/1782800607959-h2hvth.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796066584-73nj6m.webp": "img/w640/1782796066584-73nj6m.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796019264-rig0fn.webp": "img/w640/1782796019264-rig0fn.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795500670-j5pr6l.webp": "img/w640/1782795500670-j5pr6l.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795424824-sgl610.webp": "img/w640/1782795424824-sgl610.webp",
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782794879765-223izw.webp": "img/w640/1782794879765-223izw.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782794989949-b7yu7y.webp": "img/w640/1782794989949-b7yu7y.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795120849-y6utis.webp": "img/w640/1782795120849-y6utis.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795272273-l61dni.webp": "img/w640/1782795272273-l61dni.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795309958-jeqfaq.webp": "img/w640/1782795309958-jeqfaq.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795459169-exqurt.webp": "img/w640/1782795459169-exqurt.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795539787-zx1go4.webp": "img/w640/1782795539787-zx1go4.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796132046-268a1m.webp": "img/w640/1782796132046-268a1m.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796236605-0o9kuh.webp": "img/w640/1782796236605-0o9kuh.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796279721-4s5yo4.webp": "img/w640/1782796279721-4s5yo4.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796407757-h7ta3g.webp": "img/w640/1782796407757-h7ta3g.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800267091-2fphba.webp": "img/w640/1782800267091-2fphba.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800332634-0wfg7i.webp": "img/w640/1782800332634-0wfg7i.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800511874-tl9j3r.webp": "img/w640/1782800511874-tl9j3r.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800650727-ufe1gz.webp": "img/w640/1782800650727-ufe1gz.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800692628-5vzkoh.webp": "img/w640/1782800692628-5vzkoh.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800763166-jru65p.webp": "img/w640/1782800763166-jru65p.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782801442553-tvuwsg.webp": "img/w640/1782801442553-tvuwsg.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782801477862-ab5yvt.webp": "img/w640/1782801477862-ab5yvt.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782801543122-kbq0cl.webp": "img/w640/1782801543122-kbq0cl.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802128539-2e94qr.webp": "img/w640/1782802128539-2e94qr.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802164661-pdy1y4.webp": "img/w640/1782802164661-pdy1y4.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802231209-vx1yfs.webp": "img/w640/1782802231209-vx1yfs.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802264858-d8ki67.webp": "img/w640/1782802264858-d8ki67.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802608241-iagsbs.webp": "img/w640/1782802608241-iagsbs.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802645225-4e1xea.webp": "img/w640/1782802645225-4e1xea.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802805117-ufl47g.webp": "img/w640/1782802805117-ufl47g.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802886367-g9dzgk.webp": "img/w640/1782802886367-g9dzgk.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782794943071-8bzsco.webp": "img/w640/1782794943071-8bzsco.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795169292-onwg3c.webp": "img/w640/1782795169292-onwg3c.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796365945-eemvqt.webp": "img/w640/1782796365945-eemvqt.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800423119-jg3r37.webp": "img/w640/1782800423119-jg3r37.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800727849-sqv9h7.webp": "img/w640/1782800727849-sqv9h7.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800808124-y0n1xn.webp": "img/w640/1782800808124-y0n1xn.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782801505383-kqz6iw.webp": "img/w640/1782801505383-kqz6iw.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802194372-9fl9pv.webp": "img/w640/1782802194372-9fl9pv.webp",
+ "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782802853466-uyl2gj.webp": "img/w640/1782802853466-uyl2gj.webp"
+};
+const IMG_DIMS = {
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782800607959-h2hvth.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796066584-73nj6m.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782796019264-rig0fn.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795500670-j5pr6l.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782795424824-sgl610.webp": [640, 640],
+  "https://ehdwvdubcudlvbpbsvld.supabase.co/storage/v1/object/public/cafe-images/menu/1782794879765-223izw.webp": [640, 640],
+ "img/w640/1782794989949-b7yu7y.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782795120849-y6utis.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782795272273-l61dni.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782795309958-jeqfaq.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782795459169-exqurt.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782795539787-zx1go4.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782796132046-268a1m.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782796236605-0o9kuh.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782796279721-4s5yo4.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782796407757-h7ta3g.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800267091-2fphba.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800332634-0wfg7i.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800511874-tl9j3r.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800650727-ufe1gz.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800692628-5vzkoh.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800763166-jru65p.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782801442553-tvuwsg.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782801477862-ab5yvt.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782801543122-kbq0cl.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802128539-2e94qr.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802164661-pdy1y4.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802231209-vx1yfs.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802264858-d8ki67.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802608241-iagsbs.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802645225-4e1xea.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802805117-ufl47g.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802886367-g9dzgk.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782794943071-8bzsco.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782795169292-onwg3c.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782796365945-eemvqt.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800423119-jg3r37.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800727849-sqv9h7.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782800808124-y0n1xn.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782801505383-kqz6iw.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802194372-9fl9pv.webp": [
+  640,
+  640
+ ],
+ "img/w640/1782802853466-uyl2gj.webp": [
+  640,
+  640
+ ]
+};
