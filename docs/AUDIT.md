@@ -2,7 +2,7 @@
 
 ## Verified locally
 
-- 40 Node tests passed: accounting numeric coercion/Tehran calendar ranges, consistent snapshots, stale request suppression, logout cleanup, exports, storage validation, cart locking, acknowledgement handling, feedback failure propagation, Persian search, assets and templates.
+- 42 Node tests passed: accounting numeric coercion/Tehran calendar ranges, consistent snapshots, stale request suppression (including a late rejection of a superseded accounting request), real SupaDB transport-failure propagation for admin orders, logout cleanup, exports, storage validation, cart locking, acknowledgement handling, feedback failure propagation, Persian search, assets and templates. The two races the independent pre-commit review flagged were re-tested and fixed.
 - Core Chrome smoke passed for index/admin with external requests blocked and default data injected. Offline admin shows login and hides dashboard. No JavaScript errors or horizontal overflow at 390px. Cart focus, Escape and focus restoration passed.
 - Template Chrome suite passed 122 checks over classic/garden/midnight, widths 320/390/768/1024/1440, no-JS content, cart/search/filter, persistence, keyboard focus, reduced motion and local resources. Zero HTTP failures.
 - npm audit: zero reported package vulnerabilities. This does not audit vendored libraries or prove application security.

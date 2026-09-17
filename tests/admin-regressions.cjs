@@ -28,6 +28,45 @@ test('failed order load remains retryable instead of claiming loaded', async () 
   assert.equal(calls,2);
   assert.equal(messages.every(m=>m.type==='error'),true);
 });
+test('real order wrapper propagates transport failure to admin and permits retry', async () => {
+  const {ctx,admin,messages}=load();
+  vm.runInContext(fs.readFileSync(path.join(__dirname,'../js/supabase-client.js'),'utf8'),ctx);
+  const db=vm.runInContext('SupaDB',ctx);
+  let calls=0, timers=0;
+  db.ready=true;
+  db.client={from(){return {select(){return {order:async()=>{calls++;return {data:null,error:Error('network')};}};}};}};
+  admin.startAutoDeliverTimer=()=>timers++;
+  admin.orders=[{id:'previous'}];
+  await admin.openOrdersPage();
+  assert.equal(admin.ordersLoaded,false);
+  assert.equal(admin.orders[0].id,'previous');
+  await admin.openOrdersPage();
+  assert.equal(calls,2);
+  assert.equal(timers,0);
+  assert.equal(messages.length,2);
+  db.client={from(){return {select(){return {order:async()=>({data:[{id:'fresh',status:'delivered'}],error:null})};}};}};
+  await admin.openOrdersPage();
+  assert.equal(admin.ordersLoaded,true);
+  assert.equal(admin.orders[0].id,'fresh');
+  assert.equal(timers,1);
+});
+
+test('stale accounting failure cannot overwrite a newer successful load', async () => {
+  const {admin,engine,messages}=load();
+  const deferred=[];
+  engine.loadData=()=>new Promise((resolve,reject)=>deferred.push({resolve,reject}));
+  const first=admin.loadAccountingData();
+  const second=admin.loadAccountingData();
+  deferred[1].resolve(engine);
+  await second;
+  assert.equal(admin.accountingLoaded,true);
+  deferred[0].reject(Error('old request failed'));
+  await first.catch(()=>{});
+  assert.equal(admin.accountingLoaded,true,'a late failure of a superseded request must not undo the newer load');
+  assert.equal(messages.every(m=>m.type!=='error'),true);
+  deferred[1].reject(Error('current request failed')); // unreachable; keeps deferred unhandled-free
+});
+
 test('logout releases timers/charts and private snapshots even when signout fails', async () => {
   const cleared=[]; let destroyed=0;
   const {admin,engine}=load({clearInterval:id=>cleared.push(id),SupaDB:{signOut:async()=>{throw Error('offline');}}});

@@ -855,17 +855,20 @@ document.addEventListener("alpine:init", () => {
     },
 
     async loadAccountingData() {
+      // A late failure of a superseded request must not undo a newer load.
+      const request = this._accountingLoadRequest = (this._accountingLoadRequest || 0) + 1;
       this.accountingLoaded = false;
       try {
         const loaded = await AccountingEngine.loadData(this.accountingPeriod,
           this.accountingPeriod === "custom" ? AccountingEngine.customFrom : "",
           this.accountingPeriod === "custom" ? AccountingEngine.customTo : "");
-        if (!loaded) return false;
+        if (!loaded || request !== this._accountingLoadRequest) return false;
         this.accountingData = AccountingEngine.items;
         this._refreshAccountingSnapshots();
         this.accountingLoaded = true;
         return true;
       } catch (e) {
+        if (request !== this._accountingLoadRequest) return false;
         console.error("Load accounting failed:", e);
         this.accountingLoaded = false;
         this.toast("خطا در بارگذاری اطلاعات حسابداری", "error");

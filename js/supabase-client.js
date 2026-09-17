@@ -694,7 +694,7 @@ const SupaDB = {
       });
     } catch (e) {
       console.warn("Supabase fetch orders failed:", e);
-      return Utils.getStorage("cafe_orders", []);
+      throw e;
     }
   },
 
